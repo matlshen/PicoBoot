@@ -1,0 +1,79 @@
+{
+    "env": {
+        "gccExePath": "C:\\msys64\\mingw64\\bin\\arm-none-eabi-gcc.exe",
+        "project_name": "ARMCM0_STM32F072RB_Nucleo",
+        "MCU_FAMILY": "STM32F0xx",
+        "MCU_MODEL": "STM32F072xB",
+        "gccArgs": [
+            "-mcpu=cortex-m0",
+            "-mthumb"
+            //"-mfloat-abi=hard",
+            //"-mfpu=fpv4-sp-d16"
+        ]
+    },
+    "configurations": [
+        {
+            "name": "STM32",
+            "intelliSenseMode": "gcc-arm",
+            "includePath": [
+                "boot/${env:project_name}/Core/Inc",
+                "common/CMSIS/Device/ST/${env:MCU_FAMILY}/Include",
+                "common/CMSIS/Include",
+                "common/${env:MCU_FAMILY}_HAL_Driver/Inc",
+                "common/${env:MCU_FAMILY}_HAL_Driver/Legacy",
+                "bootutil/inc"
+            ],
+            "browse": {
+                "path": [
+                    "boot/${env:project_name}/Core/Src",
+                    "common/${env:MCU_FAMILY}_HAL_Driver/Src"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "defines": [
+                "${env:MCU_MODEL}",
+                "USE_HAL_DRIVER",
+                "USE_FULL_LL_DRIVER"
+            ],
+            "compilerPath": "${env:gccExePath}",
+            "cStandard": "c11"
+        },
+        {
+            "name": "Windows Host",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "host/Core/Inc",
+                "bootutil/inc"
+            ],
+            "defines": [],
+            "compilerPath": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Testing",
+            "intelliSenseMode": "gcc-arm",
+            "includePath": [
+                "boot/${env:project_name}/Core/Inc",
+                "bootutil/inc",
+                "tests",
+                "tests/stubs"
+            ],
+            "browse": {
+                "path": [
+                    "boot/${env:project_name}/Core/Src",
+                    "common/${env:MCU_FAMILY}_HAL_Driver/Src"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "defines": [
+                "${env:MCU_MODEL}",
+                "USE_HAL_DRIVER",
+                "USE_FULL_LL_DRIVER"
+            ],
+            "compilerPath": "${env:gccExePath}",
+            "cStandard": "c11"
+        },
+    ],
+    "version": 4
+}
