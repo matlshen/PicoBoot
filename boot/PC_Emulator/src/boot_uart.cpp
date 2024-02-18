@@ -28,26 +28,41 @@ Boot_StatusTypeDef UARTDeInit(void) {
 }
 
 Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
-    // Timeout ignored for now
-    if (_serial.write((char *)data, length) == length) {
-        return BOOT_OK;
-    } else {
-        return BOOT_ERROR;
+    for (int i = 0; i < length; i++) {
+        // Timeout ignored for now
+        if (_serial.write((const char *)data, 1) == 1) {
+            // Wait for the data to be written to the serial port
+            if (!_serial.waitForBytesWritten(timeout_ms)) {
+                qDebug() << "UART Tx Timeout";
+                return BOOT_TIMEOUT;
+            }
+
+            qDebug() << "UART Byte Sent";
+
+        // If the write fails, return an error
+        } else {
+            qDebug() << "UART Tx Error";
+            return BOOT_ERROR;
+        }
     }
+
+    return BOOT_OK;
 }
 
 Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
     int received = 0;
-    for(int i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
 
         // For the first byte, wait for the specified timeout period
         // For subsequent bytes, wait for the byte timeout period
         if (_serial.waitForReadyRead(received == 0 ? timeout_ms : UART_BYTE_TIMEOUT_MS)) {
             received += _serial.read((char *)data + i, 1);
         } else {
-            qDebug() << "Timeout";
+            qDebug() << "UART Rx Timeout";
             return BOOT_TIMEOUT;
         }
+
+        qDebug() << "UART Byte Received";
     }
 
     return BOOT_OK;

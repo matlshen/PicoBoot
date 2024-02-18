@@ -15,6 +15,7 @@ extern "C" {
 void BootStateMachine(void);
 static void Init(void);
 static void WaitForConnection(void);
+static void WaitForCommand(void);
 
 #ifdef __cplusplus
 }

@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-// #define HOST
-#define TARGET
+#define HOST
+// #define TARGET
 
 /* Memory Information */
 #define BL_FLASH_START_ADDRESS      0x8000000U
