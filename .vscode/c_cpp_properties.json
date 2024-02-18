@@ -13,6 +13,22 @@
     },
     "configurations": [
         {
+            "name": "PC_Emulator",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "boot/PC_Emulator/PC_Emulator/Inc",
+                "bootutil/inc"
+            ],
+            "browse": {
+                "path": [
+                    "boot/PC_Emulator/PC_Emulator/Src",
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "compilerPath": "${env:gccExePath}",
+            "cStandard": "c11"
+        },
+        {
             "name": "STM32",
             "intelliSenseMode": "gcc-arm",
             "includePath": [

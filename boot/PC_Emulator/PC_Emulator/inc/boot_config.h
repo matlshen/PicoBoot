@@ -8,8 +8,7 @@ extern "C" {
 // #define HOST
 #define TARGET
 
-#define APP_START_ADDRESS           0x8004000U
-
+/* Memory Information */
 #define BL_FLASH_START_ADDRESS      0x8000000U
 #define BL_FLASH_PAGE_SIZE          0x400
 #define BL_FLASH_SECTOR_SIZE        0x1000
@@ -19,11 +18,16 @@ extern "C" {
 #define BL_SRAM_START_ADDRESS       0x20000000U
 #define BL_SRAM_SIZE                0x00060000U
 
-// Timeout from startup to jump to application
-#define BL_TIMEOUT_MS           100000U
-// Timeout for commands
-#define COMMAND_TIMEOUT_MS      100000U
+/* Memory Locations */
+#define BL_APP_START_ADDRESS        0x8004000U
+#define BL_NUM_SLOTS                2U
+#define BL_CONFIG_ADDR              BL_APP_START_ADDRESS - BL_FLASH_PAGE_SIZE
 
+/* Timeouts */
+#define BL_TIMEOUT_MS              100000U
+#define BL_COMMAND_TIMEOUT_MS      100000U
+
+/* System Information */
 #define SYSTEM_CLOCK_MHZ        16U
 
 // #define USE_CAN

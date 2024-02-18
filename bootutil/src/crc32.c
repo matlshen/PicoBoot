@@ -48,6 +48,14 @@ static const uint32_t crc32_table[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+
+/**
+ * @brief Calculate CRC-32 of data.
+ * @param data Pointer to data.
+ * @param length Number of bytes in data.
+ * @param crc Initial value of CRC. Set to INITIAL_CRC for first call.
+ * @return CRC-32 of data.
+*/
 uint32_t crc32(const uint8_t *data, size_t length, uint32_t crc) {
 	crc = ~crc;
 	for (size_t i = 0; i < length; i++) {

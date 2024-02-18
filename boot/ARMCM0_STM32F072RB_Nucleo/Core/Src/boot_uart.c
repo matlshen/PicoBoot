@@ -95,5 +95,5 @@ Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_
         LL_USART_TransmitData8(UARTx, *data++);
     }
 
-		return BOOT_OK;
+    return BOOT_OK;
 }
