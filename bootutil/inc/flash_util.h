@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "boot.h"
+#include "boot_config.h"
 
 #ifdef __cplusplus
 extern "C" {

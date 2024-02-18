@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define UART_BYTE_TIMEOUT_MS 5000
+#define UART_BYTE_TIMEOUT_MS 100
 
 Boot_StatusTypeDef UARTInit(void);
 Boot_StatusTypeDef UARTDeInit(void);

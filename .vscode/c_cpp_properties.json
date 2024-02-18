@@ -14,14 +14,14 @@
     "configurations": [
         {
             "name": "PC_Emulator",
-            "intelliSenseMode": "windows-gcc-x64",
+            "intelliSenseMode": "windows-g++-x64",
             "includePath": [
-                "boot/PC_Emulator/PC_Emulator/Inc",
+                "boot/PC_Emulator/Inc",
                 "bootutil/inc"
             ],
             "browse": {
                 "path": [
-                    "boot/PC_Emulator/PC_Emulator/Src",
+                    "boot/PC_Emulator/Src",
                 ],
                 "limitSymbolsToIncludedHeaders": true
             },

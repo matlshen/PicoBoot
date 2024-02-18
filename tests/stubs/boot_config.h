@@ -1,34 +1,49 @@
-#include "boot.h"
+#ifndef BOOT_CONFIG_H_
+#define BOOT_CONFIG_H_
 
-// Memory Configurations
-#define BL_FLASH_START_ADDRESS 0x08000000U
-#define BL_FLASH_PAGE_SIZE     0x800U
-#define BL_FLASH_SIZE          0x20000U
-#define BL_FLASH_APP_ADDRESS   0x08004000U
-#define BL_FLASH_END_ADDRESS   BL_FLASH_START_ADDRESS + BL_FLASH_SIZE - 1
-#define BL_SRAM_START_ADDRESS  0x20000000U
-#define BL_SRAM_SIZE           0x4000U
-#define BL_SRAM_END_ADDRESS    BL_SRAM_START_ADDRESS + BL_SRAM_SIZE - 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Eventaully this will be moved to OTP area
-#define PUBLIC_KEY 0x1234567
+// #define HOST
+#define TARGET
 
-// Static configurations
-#define BL_CONFIG_ADDR  0x8001000
-#define BL_NUM_SLOTS    2
+/* Memory Information */
+#define BL_FLASH_START_ADDRESS      0x8000000U
+#define BL_FLASH_PAGE_SIZE          0x400
+#define BL_FLASH_SECTOR_SIZE        0x1000
+#define BL_FLASH_SIZE               0x00020000U
+#define BL_FLASH_END_ADDRESS        BL_FLASH_START_ADDRESS + BL_FLASH_SIZE
 
-// Bootloader configuration flags
-#define BL_SIG_FLAG     (0x1 << 0)  // TODO: not yet supported
-#define BL_ENCRYPT_FLAG (0x1 << 1)  // TODO: not yet supported
-#define BL_BASH_FLAG    (0x1 << 2)  // TODO: not yet supported
-#define BL_FLAG_FLAG    (0x1 << 3)  // TODO: not yet supported
-#define BL_DECRYPT_FLAG (0x1 << 4)  // TODO: not yet supported
-#define BL_WHAT_FLAG    (0x1 << 5)  // TODO: not yet supported
-#define BL_ZOMM_FLAG    (0x1 << 6)  // TODO: not yet supported
-#define BL_DEA_FLAG    (0x1 << 7)  // TODO: not yet supported
+#define BL_SRAM_START_ADDRESS       0x20000000U
+#define BL_SRAM_SIZE                0x00060000U
 
-// Default slot configuration
-#define BL_SLOT0_ADDR   0x08004000U
-#define BL_SLOT0_SIZE   0x8000U
-#define BL_SLOT1_ADDR   0x0800C000U
-#define BL_SLOT1_SIZE   0x8000U
+/* Memory Locations */
+#define BL_APP_START_ADDRESS        0x8004000U
+#define BL_NUM_SLOTS                2U
+#define BL_CONFIG_ADDR              BL_APP_START_ADDRESS - BL_FLASH_PAGE_SIZE
+
+/* Timeouts */
+#define BL_TIMEOUT_MS              100000U
+#define BL_COMMAND_TIMEOUT_MS      100000U
+
+/* System Information */
+#define SYSTEM_CLOCK_MHZ        16U
+
+// #define USE_CAN
+//     #define CAN_RX_PIN      PB8
+//     #define CAN_TX_PIN      PB9
+//     #define CAN_BAUDRATE    500000
+#define USE_UART
+    #define UART_RX_PIN_PA3
+    #define UART_TX_PIN_PA2
+    #define UART_BAUDRATE   115200
+// #define USE_PC_SERIAL
+//     #define PC_SERIAL_BAUDRATE 115200
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // BOOT_CONFIG_H_

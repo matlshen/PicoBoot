@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "boot_config.h"
 #include "boot_types.h"
+#include "com.h"
 #include "crc32.h"
 
 #ifdef __cplusplus
