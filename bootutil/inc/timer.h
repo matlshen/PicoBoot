@@ -9,7 +9,6 @@ extern "C" {
 
 #include "boot_types.h"
 
-#define BYTE_TIMEOUT_MS 500
 #define MAX_TIMEOUT_MS  __UINT32_MAX__
 
 extern uint32_t boot_time_ms;

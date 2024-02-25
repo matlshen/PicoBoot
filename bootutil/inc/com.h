@@ -18,6 +18,7 @@ Boot_StatusTypeDef ComTransmitPacket(Boot_MsgIdTypeDef msg_id, uint8_t *data, ui
 Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, uint8_t *length, uint32_t timeout_ms);
 Boot_StatusTypeDef ComAck();
 Boot_StatusTypeDef ComNack();
+uint32_t ComGetTimeoutMs();
 
 
 #ifdef __cplusplus

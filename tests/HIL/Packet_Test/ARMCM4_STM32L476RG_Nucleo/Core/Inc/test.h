@@ -4,6 +4,7 @@
 #include "com.h"
 
 // Data buffer
+Boot_StatusTypeDef status;
 Boot_MsgIdTypeDef msg_id;
 uint8_t data[256];
 uint8_t length;
@@ -13,15 +14,18 @@ void TestFunction(void) {
     ComInit();
 
     while (1) {
-        if (ComReceivePacket(&msg_id, data, &length, 50) == BOOT_OK) {
-            // Transmit ACK
-            ComAck();
+        status = ComReceivePacket(&msg_id, data, &length, 50);
 
-            // Transmit the received data back over UART
+        // Echo packet if received successfully
+        if (status == BOOT_OK) {
             ComTransmitPacket(msg_id, data, length);
         }
+        // Transmit ACK continuously on timeout
+        else if (status == BOOT_TIMEOUT) {
+            ComAck();
+        }
+        // Transmit NACK if data format error
         else {
-            // Transmit NACK
             ComNack();
         }
     }

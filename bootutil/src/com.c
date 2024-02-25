@@ -9,6 +9,7 @@
 // Ensure that multiple interfaces cannot be defined
 #ifdef USE_UART
     #include "uart.h"
+    #define BYTE_TIMEOUT_MS UART_BYTE_TIMEOUT_MS
     #define INTERFACE_INIT() UARTInit()
     #define INTERFACE_DEINIT() UARTDeInit()
     #define INTERFACE_TRANSMIT(X1, X2, X3) UARTTransmit(X1, X2, X3)
@@ -73,6 +74,10 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
         return BOOT_FORMAT_ERROR;
 
     return BOOT_OK;
+}
+
+uint32_t ComGetTimeoutMs() {
+    return BYTE_TIMEOUT_MS;
 }
 
 inline Boot_StatusTypeDef ComAck() {
