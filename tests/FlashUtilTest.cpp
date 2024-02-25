@@ -1,6 +1,15 @@
 #include <gtest/gtest.h>
 #include "flash_util.h"
 
+TEST(FlashUtil, ToU32) {
+    uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
+    EXPECT_EQ(ToU32(data), 0x04030201);
+}
+
+TEST(FlashUtil, ToU16) {
+    uint8_t data[2] = {0x11, 0x22};
+    EXPECT_EQ(ToU16(data), 0x2211);
+}
 
 TEST(FlashUtil, IsRangeValid) {
     // Lower bound

@@ -57,6 +57,7 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "fstream": "cpp",
-        "stm32l4xx_ll_rcc.h": "c"
+        "stm32l4xx_ll_rcc.h": "c",
+        "flash_util.h": "c"
     }
 }

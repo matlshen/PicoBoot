@@ -9,6 +9,9 @@
 extern "C" {
 #endif
 
+uint32_t ToU32(const uint8_t *data);
+uint16_t ToU16(const uint8_t *data);
+
 bool FlashUtil_IsRangeValid(uint32_t address, uint32_t size);
 bool FlashUtil_IsPageAligned(uint32_t value);
 uint32_t FlashUtil_GetRangeAlignment(uint32_t address, uint32_t size);
