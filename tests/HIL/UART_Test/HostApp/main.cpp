@@ -44,7 +44,7 @@ void Test2() {
     QElapsedTimer timer;
     uint8_t data[6] = {0};
 
-    UARTTransmit((uint8_t*)"tests", 6);
+    UARTTransmit((uint8_t*)"tests", 6, 1000);
     timer.start();
 
     UARTReceive(data, 6, 1000);
@@ -63,7 +63,7 @@ void Test3() {
     QElapsedTimer timer;
     uint8_t data[6] = {0};
 
-    UARTTransmit((uint8_t*)"one", 4);
+    UARTTransmit((uint8_t*)"one", 4, 1000);
     timer.start();
 
     UARTReceive(data, 6, 1000);

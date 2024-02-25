@@ -11,7 +11,7 @@ typedef enum {
 } Boot_StateTypeDef;
 static Boot_StateTypeDef boot_state = INIT;
 static bool in_bootloader_mode = false;
-static Boot_StateTypeDef status;
+static Boot_StatusTypeDef status;
 
 void BootStateMachine(void) {
     switch(boot_state) {

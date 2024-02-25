@@ -11,7 +11,7 @@
     #include "uart.h"
     #define INTERFACE_INIT() UARTInit()
     #define INTERFACE_DEINIT() UARTDeInit()
-    #define INTERFACE_TRANSMIT(X1, X2, X3) UARTTransmit(X1, X2)
+    #define INTERFACE_TRANSMIT(X1, X2, X3) UARTTransmit(X1, X2, X3)
     #define INTERFACE_RECEIVE(X1, X2, X3) UARTReceive(X1, X2, X3)
 #endif
 
