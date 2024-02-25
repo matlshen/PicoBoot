@@ -13,7 +13,7 @@ extern "C" {
 
 Boot_StatusTypeDef UARTInit(void);
 Boot_StatusTypeDef UARTDeInit(void);
-Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms);
+Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length);
 Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms);
 
 

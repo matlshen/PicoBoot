@@ -1,9 +1,9 @@
 {
     "env": {
         "gccExePath": "C:\\msys64\\mingw64\\bin\\arm-none-eabi-gcc.exe",
-        "project_name": "ARMCM0_STM32F072RB_Nucleo",
-        "MCU_FAMILY": "STM32F0xx",
-        "MCU_MODEL": "STM32F072xB",
+        "project_name": "ARMCM4_STM32L476RG_Nucleo",
+        "MCU_FAMILY": "STM32L4xx",
+        "MCU_MODEL": "STM32L476xx",
         "gccArgs": [
             "-mcpu=cortex-m0",
             "-mthumb"
