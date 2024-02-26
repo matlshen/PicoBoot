@@ -23,8 +23,8 @@ extern "C" {
 #define BL_CONFIG_ADDR              BL_APP_START_ADDRESS - BL_FLASH_PAGE_SIZE
 
 /* Timeouts */
-#define BL_TIMEOUT_MS              500U
-#define BL_COMMAND_TIMEOUT_MS      5000U
+#define BL_TIMEOUT_MS              100000U
+#define BL_COMMAND_TIMEOUT_MS      100000U
 
 /* System Information */
 #define SYSTEM_CLOCK_MHZ        16U
