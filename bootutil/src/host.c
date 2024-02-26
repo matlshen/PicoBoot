@@ -1,4 +1,5 @@
 #include "host.h"
+#include "flash_util.h"
 
 Boot_StatusTypeDef ConnectToTarget(void) {
     // Send empty connection request
@@ -96,10 +97,19 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
 */
 Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms) {
     Boot_MsgIdTypeDef msg_id = MSG_ID_ACK;
+    uint8_t length = 0xFF;
 
     // Wait for ack
-    if (ComReceivePacket(&msg_id, NULL, NULL, timeout_ms) != BOOT_OK)
+    if (ComReceivePacket(&msg_id, NULL, &length, timeout_ms) != BOOT_OK)
         return BOOT_ERROR;
 
+    // Check if received message is an ACK
+    if (msg_id != MSG_ID_ACK || length != 0)
+        return BOOT_ERROR;
+
+    return BOOT_OK;
+}
+
+Boot_StatusTypeDef HelloWorld() {
     return BOOT_OK;
 }

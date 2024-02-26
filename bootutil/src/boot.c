@@ -99,10 +99,6 @@ void WaitForCommand(void) {
     if (status == BOOT_OK) {
         // If command, handle command and go back to waiting for command
         switch (msg_id) {
-            // TODO: Maybe change this behavior?
-            case MSG_ID_CONN_REQ:
-                ComAck();
-                break;
             case MSG_ID_CHANGE_SPEED:
                 ChangeSpeed();
                 break;

@@ -1,9 +1,10 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QThread>
+#include <QDebug>
 #include "com.h"
 #include "flash_util.h"
-#include "crc32.h"
+#include "host.h"
 #include <cstring>
 
 void InitiateConnection() {
@@ -302,17 +303,82 @@ void Test5() {
     qDebug() << "Test5: Passed" << ", write latency:" << elapsed << "ms";
 }
 
+void Test6() {
+    uint8_t read_data[8];
+    if (ReadTargetMemory(0x8005000, 0x8, read_data) != BOOT_OK) {
+        qDebug() << "Test6 Error: Read failed";
+        return;
+    }
+
+    // Print read data
+    for (int i = 0; i < 8; i++) {
+        qDebug() << Qt::hex << read_data[i];
+    }
+}
+
+void Test7() {
+    uint8_t write_data[8] = {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19};
+    if (WriteTargetMemory(0x8005008, 0x8, write_data) != BOOT_OK) {
+        qDebug() << "Test7 Error: Write failed";
+        return;
+    }
+
+    uint8_t read_data[8];
+    if (ReadTargetMemory(0x8005008, 0x8, read_data) != BOOT_OK) {
+        qDebug() << "Test7 Error: Read failed";
+        return;
+    }
+
+    // Check if read data matches written data
+    if (memcmp(write_data, read_data, 8) != 0) {
+        qDebug() << "Test7 Error: Read data does not match written data";
+        return;
+    }
+
+    qDebug() << "Test7: Passed";
+}
+
+void Test8() {
+    uint8_t write_data[304];
+    for (int i = 0; i < 304; i++) {
+        write_data[i] = i % 256;
+    }
+
+    if (WriteTargetMemory(0x8005000, 304, write_data) != BOOT_OK) {
+        qDebug() << "Test8 Error: Write failed";
+        return;
+    }
+
+    uint8_t read_data[304];
+    if (ReadTargetMemory(0x8005000, 304, read_data) != BOOT_OK) {
+        qDebug() << "Test8 Error: Read failed";
+        return;
+    }
+
+    // Check if read data matches written data
+    if (memcmp(write_data, read_data, 304) != 0) {
+        qDebug() << "Test8 Error: Read data does not match written data";
+        return;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
     ComInit();
 
-    Test1();
-    Test2();
-    Test3();
-    Test4();
+    // Flash tests
+    //Test1();
+    //Test2();
+    //Test3();
+    //Test4();
     //Test5();
+
+    // host.c tests
+    //Test6();
+    //Test7();
+    Test8();
 
     return a.exec();
 }

@@ -14,6 +14,8 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
 
 Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms);
 
+Boot_StatusTypeDef HelloWorld();
+
 #ifdef __cplusplus
 }
 #endif

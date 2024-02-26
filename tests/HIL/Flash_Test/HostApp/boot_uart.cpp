@@ -65,7 +65,7 @@ Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_m
             return BOOT_TIMEOUT;
         }
 
-        // qDebug() << "UART Byte Received";
+        // qDebug() << "UART Byte Received" << Qt::hex << data[i];
     }
 
     return BOOT_OK;
