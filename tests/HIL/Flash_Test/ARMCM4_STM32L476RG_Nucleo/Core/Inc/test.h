@@ -36,13 +36,18 @@ void HandleFlashWrite(void) {
         return;
     }
 
-    // If range is not valid, send nack
-    if (!FlashUtil_IsRangeValid(ToU32(&data[0]), ToU16(&data[4]))) {
+    uint32_t start_address = ToU32(&data[0]);
+    uint16_t bytes_remaining = ToU16(&data[4]);
+    uint32_t end_address = ToU32(&data[0]) + bytes_remaining;
+
+    // If write range is not valid, send nack and return
+    // Otherwise, send ack to signal ready to receive write data
+    if (!FlashWriteRangeValid(start_address, bytes_remaining)) {
         ComNack();
         return;
+    } else {
+        ComAck();
     }
-
-    uint16_t bytes_remaining = ToU16(&data[4]);
 
     // Receive write data in 8-byte chunks
     while (bytes_remaining > 0) {
@@ -60,7 +65,7 @@ void HandleFlashWrite(void) {
         }
 
         // If write operation was not successful, send nack
-        if (FlashWrite(ToU32(&data[0]) + ToU16(&data[4]) - bytes_remaining, data, bytes_to_receive) != BOOT_OK) {
+        if (FlashWrite(end_address - bytes_remaining, data, bytes_to_receive) != BOOT_OK) {
             ComNack();
             return;
         }
@@ -79,14 +84,8 @@ void HandleFlashRead(void) {
         return;
     }
 
-    // If range is not valid, send nack
-    if (!FlashUtil_IsRangeValid(ToU32(&data[0]), ToU16(&data[4]))) {
-        ComNack();
-        return;
-    }
-
     uint16_t bytes_remaining = ToU16(&data[4]);
-    uint32_t end_address = ToU32(&data[0]) + ToU16(&data[4]);
+    uint32_t end_address = ToU32(&data[0]) + bytes_remaining;
 
     // Read data from flash into buffer in 256 byte chunks
     while (bytes_remaining > 0) {

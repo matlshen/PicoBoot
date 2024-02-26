@@ -24,7 +24,7 @@ Boot_StatusTypeDef ComDeInit(void) {
     return INTERFACE_DEINIT();
 }
 
-inline Boot_StatusTypeDef ComTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+inline Boot_StatusTypeDef ComTransmit(const uint8_t *data, uint8_t length, uint32_t timeout_ms) {
     return INTERFACE_TRANSMIT(data, length, timeout_ms);
 }
 
@@ -32,7 +32,7 @@ inline Boot_StatusTypeDef ComReceive(uint8_t *data, uint8_t length, uint32_t tim
     return INTERFACE_RECEIVE(data, length, timeout_ms);
 }
 
-Boot_StatusTypeDef ComTransmitPacket(Boot_MsgIdTypeDef msg_id, uint8_t *data, uint8_t length) {
+Boot_StatusTypeDef ComTransmitPacket(Boot_MsgIdTypeDef msg_id, const uint8_t *data, uint8_t length) {
     Boot_StatusTypeDef status = BOOT_OK;
 
     // Transmit the message ID
