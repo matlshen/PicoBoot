@@ -64,14 +64,18 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
         return BOOT_TIMEOUT;
 
     // Receive the length
-    status = ComReceive((uint8_t*)length, 1, BYTE_TIMEOUT_MS);
-    if (status != BOOT_OK)
-        return BOOT_FORMAT_ERROR;
+    if (length != NULL) {
+        status = ComReceive((uint8_t*)length, 1, BYTE_TIMEOUT_MS);
+        if (status != BOOT_OK)
+            return BOOT_FORMAT_ERROR;
+    }
 
     // Receive the data
-    status = ComReceive(data, *length, BYTE_TIMEOUT_MS);
-    if (status != BOOT_OK)
-        return BOOT_FORMAT_ERROR;
+    if (data != NULL) {
+        status = ComReceive(data, *length, BYTE_TIMEOUT_MS);
+        if (status != BOOT_OK)
+            return BOOT_FORMAT_ERROR;
+    }
 
     return BOOT_OK;
 }
