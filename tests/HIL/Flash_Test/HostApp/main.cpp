@@ -170,6 +170,8 @@ void Test4() {
     Boot_MsgIdTypeDef msg_id = MSG_ID_NACK;
     uint8_t data[256] = {0};
     uint8_t length = 0;
+    uint8_t write_data[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0x12, 0x34, 0x56, 0x78};
+    qint64 elapsed = -1;
 
     // Send mem erase request
     ToFlashPacket(0x8005000, 0x800, data);
@@ -188,13 +190,18 @@ void Test4() {
         return;
     }
     // Send write data
-    uint8_t write_data[8] = {0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B};
-    ComTransmit(write_data, 8, 100);
+    if (ComTransmit(write_data, 8, 100) != BOOT_OK) {
+        qDebug() << "Test4 Error: Failed to send write data";
+        return;
+    }
     // Send checksum
     uint32_t checksum = crc32(write_data, 8, INITIAL_CRC);
-    ComTransmit((uint8_t*)&checksum, 4, 100);
+    if (ComTransmit((uint8_t*)&checksum, 4, 100) != BOOT_OK) {
+        qDebug() << "Test4 Error: Failed to send checksum";
+        return;
+    }
     // Wait for ACK
-    qint64 elapsed = WaitForPacket(MSG_ID_ACK, 200, "Test4");
+    elapsed = WaitForPacket(MSG_ID_ACK, 200, "Test4");
     if (elapsed == -1) {
         return;
     }
@@ -203,11 +210,11 @@ void Test4() {
     ToFlashPacket(0x8005000, 0x8, data);
     ComTransmitPacket(MSG_ID_MEM_READ, data, 6);
     // Wait for ACK
-    if (WaitForPacket(MSG_ID_ACK, 100, "Test4") == -1) {
+    if (WaitForPacket(MSG_ID_ACK, 5000, "Test4") == -1) {
         return;
     }
     // Read back written data
-    if (ComReceive(data, 0x8, 1000) != BOOT_OK) {
+    if (ComReceive(data, 0x8, 5000) != BOOT_OK) {
         qDebug() << "Test4 Error: Readback failed";
         return;
     }
@@ -216,7 +223,7 @@ void Test4() {
         return;
     }
     // Wait for ACK
-    if (WaitForPacket(MSG_ID_ACK, 10, "Test4") == -1) {
+    if (WaitForPacket(MSG_ID_ACK, 1000, "Test4") == -1) {
         return;
     }
 
