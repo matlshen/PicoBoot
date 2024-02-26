@@ -4,6 +4,7 @@
 #include "com.h"
 #include "flash.h"
 #include "flash_util.h"
+#include "crc32.h"
 
 // Data buffer
 Boot_StatusTypeDef status;
@@ -49,28 +50,43 @@ void HandleFlashWrite(void) {
         ComAck();
     }
 
-    // Receive write data in 8-byte chunks
+    // Receive write data in 255 byte chunks
     while (bytes_remaining > 0) {
-        uint16_t bytes_to_receive = (bytes_remaining > 8) ? 8 : bytes_remaining;
+        uint16_t bytes_to_receive = (bytes_remaining > 255) ? 255 : bytes_remaining;
 
-        if (ComReceivePacket(&msg_id, data, &length, 100) != BOOT_OK) {
-            ComNack();
-            return;
-        }
-
-        // Invalid message
-        if (msg_id != MSG_ID_MEM_WRITE || length != bytes_to_receive) {
-            ComNack();
-            return;
-        }
-
-        // If write operation was not successful, send nack
-        if (FlashWrite(end_address - bytes_remaining, data, bytes_to_receive) != BOOT_OK) {
+        // Receive chunk data
+        if (ComReceive(data, bytes_to_receive, 100) != BOOT_OK) {
             ComNack();
             return;
         }
 
         bytes_remaining -= bytes_to_receive;
+
+        // If 255 bytes have been received or this is last chunk,
+        // receive the checksum and verify
+        if (bytes_to_receive == 255 || bytes_remaining == 0) {
+            if (ComReceive(data, 4, 100) != BOOT_OK) {
+                ComNack();
+                return;
+            }
+
+            uint32_t checksum = ToU32(data);
+            uint32_t calculated_checksum = crc32(data, 255, INITIAL_CRC);
+
+            // If checksums do not match, send nack
+            // Otherwise, write to flash and send ack
+            if (checksum != calculated_checksum) {
+                ComNack();
+                return;
+            } else {
+                // TODO: Verify that this is correct
+                if (FlashWrite(end_address - bytes_remaining - 255, data, 255) != BOOT_OK) {
+                    ComNack();
+                    return;
+                }
+                ComAck();
+            }
+        }
     }
 
     // Send ack if write operation was successful
@@ -84,12 +100,22 @@ void HandleFlashRead(void) {
         return;
     }
 
+    uint32_t start_address = ToU32(&data[0]);
     uint16_t bytes_remaining = ToU16(&data[4]);
     uint32_t end_address = ToU32(&data[0]) + bytes_remaining;
 
-    // Read data from flash into buffer in 256 byte chunks
+    // If read range is not valid, send nack and return
+    // Otherwise, send ack to signal start of read data
+    if (!FlashReadRangeValid(start_address, bytes_remaining)) {
+        ComNack();
+        return;
+    } else {
+        ComAck();
+    }
+
+    // Read data from flash into buffer in 255 byte chunks
     while (bytes_remaining > 0) {
-        uint16_t current_read_size = (bytes_remaining > 256) ? 256 : bytes_remaining;
+        uint8_t current_read_size = (bytes_remaining > 255) ? 255 : bytes_remaining;
 
         if (FlashRead(end_address - bytes_remaining, data, current_read_size) != BOOT_OK) {
             ComNack();
@@ -99,15 +125,14 @@ void HandleFlashRead(void) {
         // Update bytes remaining
         bytes_remaining -= current_read_size;
 
-        // Transmit the read data in 8-byte chunks
-        while (current_read_size > 0) {
-            uint16_t bytes_to_send = (current_read_size > 8) ? 8 : current_read_size;
-            ComTransmitPacket(MSG_ID_MEM_READ, data, bytes_to_send);
-            current_read_size -= bytes_to_send;
+        // Transmit the current chunk
+        if (ComTransmit(data, current_read_size, 100) != BOOT_OK) {
+            ComNack();
+            return;
         }
     }
 
-    // Send ack if read operation was successful
+    // Send ack to signal end of read data
     ComAck();
 }
 
