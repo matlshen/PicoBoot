@@ -1,4 +1,5 @@
 #include "flash_util.h"
+#include <memory.h>
 
 /**
  * @brief Convert byte array to 32-bit unsigned integer.
@@ -19,6 +20,46 @@ uint16_t ToU16(const uint8_t *data) {
 }
 
 /**
+ * @brief Convert 32-bit unsigned integer to byte array.
+ * @param value 32-bit unsigned integer.
+ * @param data Byte array.
+*/
+void U32ToBytes(uint32_t value, uint8_t *data) {
+    memcpy(data, &value, sizeof(value));
+}
+
+/**
+ * @brief Convert 16-bit unsigned integer to byte array.
+ * @param value 16-bit unsigned integer.
+ * @param data Byte array.
+*/
+void U16ToBytes(uint16_t value, uint8_t *data) {
+    memcpy(data, &value, sizeof(value));
+}
+
+/**
+ * @brief Convert address and size to byte array.
+ * @param address Address.
+ * @param size Size.
+ * @param data Byte array.
+*/
+void ToFlashPacket(uint32_t address, uint16_t size, uint8_t *data) {
+    U32ToBytes(address, data);
+    U16ToBytes(size, data + 4);
+}
+
+/**
+ * @brief Convert byte array to address and size.
+ * @param address Address.
+ * @param size Size.
+ * @param data Byte array.
+*/
+void FromFlashPacket(uint32_t *address, uint16_t *size, const uint8_t *data) {
+    *address = ToU32(data);
+    *size = ToU16(data + 4);
+}
+
+/**
  * @brief Check whether specified range is within application section of Flash.
  * @param address Start address of range.
  * @param size Number of bytes in range.
@@ -35,6 +76,24 @@ bool FlashUtil_IsRangeValid(uint32_t address, uint32_t size) {
 */
 bool FlashUtil_IsPageAligned(uint32_t value) {
     return (value & (BL_FLASH_PAGE_SIZE-1)) == 0;
+}
+
+/**
+ * @brief Get page number for specified address.
+ * @param address Address to get page number for.
+ * @return Page number.
+*/
+uint32_t FlashUtil_GetPage(uint32_t address) {
+    return (address - BL_FLASH_START_ADDRESS) / BL_FLASH_PAGE_SIZE;
+}
+
+/**
+ * @brief Get number of pages required to store specified number of bytes.
+ * @param size Number of bytes.
+ * @return Number of pages.
+*/
+uint32_t FlashUtil_GetNumPages(uint32_t size) {
+    return (size + BL_FLASH_PAGE_SIZE - 1) / BL_FLASH_PAGE_SIZE;
 }
 
 /**

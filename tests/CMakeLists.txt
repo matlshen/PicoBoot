@@ -28,8 +28,6 @@ target_include_directories(crc32_test PRIVATE ../bootutil/inc)
 target_link_libraries(crc32_test GTest::gtest_main)
 
 
-
-
 include(GoogleTest)
 gtest_discover_tests(
   flash_util_test

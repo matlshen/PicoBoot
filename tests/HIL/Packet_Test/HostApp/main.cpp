@@ -2,7 +2,7 @@
 #include <QElapsedTimer>
 #include "com.h"
 
-/* Wait for consecutive NACKs to be received */
+/* Wait for consecutive ACKs to be received on timeout */
 void Test1() {
     QElapsedTimer timer;
     Boot_MsgIdTypeDef msg_id = MSG_ID_NACK;
@@ -13,7 +13,7 @@ void Test1() {
     timer.start();
 
     if (msg_id != MSG_ID_ACK) {
-        qDebug() << "Test1 Error: Expected NACK 1, got" << msg_id;
+        qDebug() << "Test1 Error: Expected ACK 1, got" << msg_id;
         return;
     }
 
@@ -21,7 +21,7 @@ void Test1() {
     qint64 elapsed = timer.elapsed();
 
     if (msg_id != MSG_ID_ACK) {
-        qDebug() << "Test1 Error: Expected NACK 2, got" << msg_id;
+        qDebug() << "Test1 Error: Expected ACK 2, got" << msg_id;
         return;
     }
 
