@@ -100,12 +100,15 @@ void WaitForCommand(void) {
         // If command, handle command and go back to waiting for command
         switch (msg_id) {
             case MSG_ID_CHANGE_SPEED:
+                // TODO: Implement this
                 ChangeSpeed();
                 break;
             case MSG_ID_CHANGE_NODE_ID:
+                // TODO: Implement this
                 ChangeNodeId();
                 break;
             case MSG_ID_GET_CONFIG:
+                // TODO: Implement this
                 GetConfig();
                 break;
             case MSG_ID_MEM_ERASE:
@@ -118,7 +121,16 @@ void WaitForCommand(void) {
                 ReadMemory();
                 break;
             case MSG_ID_VERIFY:
+                // TODO: Implement this
                 Verify();
+                break;
+            case MSG_ID_GO:
+                // TODO: Implement this
+                break;
+            case MSG_ID_RESET:
+                // Directly call low-level function
+                // Reset can't return or error
+                SystemReset();
                 break;
             default:
                 // Invalid command

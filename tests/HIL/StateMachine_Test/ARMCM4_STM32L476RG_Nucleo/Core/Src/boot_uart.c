@@ -44,6 +44,17 @@ Boot_StatusTypeDef UARTInit(void) {
     return BOOT_OK;
 }
 
+Boot_StatusTypeDef UARTDeInit(void) {
+    // Disable UART
+    LL_USART_Disable(UARTx);
+
+    // Disable peripheral clocks
+    LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_USART2);
+    LL_AHB2_GRP1_DisableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
+
+    return BOOT_OK;
+}
+
 Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     // Enable receive
     LL_USART_EnableDirectionRx(UARTx);
