@@ -25,7 +25,7 @@ extern "C" {
 
 /* Timeouts */
 #define BL_TIMEOUT_MS              100000U
-#define BL_COMMAND_TIMEOUT_MS      100000U
+#define BL_COMMAND_TIMEOUT_MS      1000U
 
 /* System Information */
 #define SYSTEM_CLOCK_MHZ        16U

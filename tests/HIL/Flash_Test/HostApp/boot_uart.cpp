@@ -5,7 +5,7 @@
 QSerialPort _serial;
 
 Boot_StatusTypeDef UARTInit(void) {
-    _serial.setPortName("COM13");    // TODO: Make this configurable
+    _serial.setPortName("COM9");    // TODO: Make this configurable
     _serial.setBaudRate(QSerialPort::Baud115200);
     _serial.setDataBits(QSerialPort::Data8);
     _serial.setParity(QSerialPort::NoParity);
@@ -27,7 +27,7 @@ Boot_StatusTypeDef UARTDeInit(void) {
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     for (int i = 0; i < length; i++) {
 
         // Attempt to write the byte to the serial port
@@ -52,7 +52,7 @@ Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     int received = 0;
     for (int i = 0; i < length; i++) {
 

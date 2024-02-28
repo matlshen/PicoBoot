@@ -24,11 +24,11 @@ Boot_StatusTypeDef ComDeInit(void) {
     return INTERFACE_DEINIT();
 }
 
-inline Boot_StatusTypeDef ComTransmit(const uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+inline Boot_StatusTypeDef ComTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     return INTERFACE_TRANSMIT(data, length, timeout_ms);
 }
 
-inline Boot_StatusTypeDef ComReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+inline Boot_StatusTypeDef ComReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     return INTERFACE_RECEIVE(data, length, timeout_ms);
 }
 

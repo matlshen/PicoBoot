@@ -15,7 +15,7 @@ Boot_StatusTypeDef ConnectToTarget(void) {
 Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size) {
     // Send erase request
     uint8_t tx_data[6];
-    ToFlashPacket(0, 0, tx_data);
+    ToFlashPacket(address, size, tx_data);
     ComTransmitPacket(MSG_ID_MEM_ERASE, tx_data, 6);
 
     // Wait for ACK
@@ -35,9 +35,9 @@ Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *da
     if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
-    // Receive data in 255 byte chunks
+    // Receive data in 256 byte chunks
     while (size > 0) {
-        uint16_t chunk_size = (size > 255) ? 255 : size;
+        uint16_t chunk_size = (size > 256) ? 256 : size;
 
         // Receive chunk
         if (ComReceive(data, chunk_size, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
@@ -64,16 +64,16 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
     if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
-    // Send write data in 255 byte chunks
+    // Send write data in 256 byte chunks
     while (size > 0) {
-        uint16_t chunk_size = (size > 255) ? 255 : size;
+        uint16_t chunk_size = (size > 256) ? 256 : size;
 
         // Send chunk
         if (ComTransmit(data, chunk_size, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
             return BOOT_ERROR;
 
-        // If 255 byte chunk was written or this is the last chunk, append CRC
-        if (chunk_size == 255 || size == chunk_size) {
+        // If 256 byte chunk was written or this is the last chunk, append CRC
+        if (chunk_size == 256 || size == chunk_size) {
             uint32_t crc = crc32(data, chunk_size, INITIAL_CRC);
             if (ComTransmit((uint8_t *)&crc, 4, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
                 return BOOT_ERROR;

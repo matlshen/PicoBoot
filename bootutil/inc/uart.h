@@ -13,8 +13,8 @@ extern "C" {
 
 Boot_StatusTypeDef UARTInit(void);
 Boot_StatusTypeDef UARTDeInit(void);
-Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms);
-Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms);
+Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms);
+Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms);
 
 
 #ifdef __cplusplus

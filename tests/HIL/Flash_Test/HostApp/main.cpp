@@ -318,13 +318,13 @@ void Test6() {
 
 void Test7() {
     uint8_t write_data[8] = {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19};
-    if (WriteTargetMemory(0x8005008, 0x8, write_data) != BOOT_OK) {
+    if (WriteTargetMemory(0x8005018, 0x8, write_data) != BOOT_OK) {
         qDebug() << "Test7 Error: Write failed";
         return;
     }
 
     uint8_t read_data[8];
-    if (ReadTargetMemory(0x8005008, 0x8, read_data) != BOOT_OK) {
+    if (ReadTargetMemory(0x8005018, 0x8, read_data) != BOOT_OK) {
         qDebug() << "Test7 Error: Read failed";
         return;
     }
@@ -339,27 +339,40 @@ void Test7() {
 }
 
 void Test8() {
-    uint8_t write_data[304];
-    for (int i = 0; i < 304; i++) {
+    uint8_t write_data[0x130];
+    for (int i = 0; i < 0x130; i++) {
         write_data[i] = i % 256;
     }
 
-    if (WriteTargetMemory(0x8005000, 304, write_data) != BOOT_OK) {
-        qDebug() << "Test8 Error: Write failed";
+    // Erase segment
+    if (EraseTargetMemory(0x8005000, 0x800) != BOOT_OK) {
+        qDebug() << "Erase failed";
         return;
     }
 
-    uint8_t read_data[304];
-    if (ReadTargetMemory(0x8005000, 304, read_data) != BOOT_OK) {
+    // Write to memory
+    QElapsedTimer timer;
+    timer.start();
+    if (WriteTargetMemory(0x8005000, 0x130, write_data) != BOOT_OK) {
+        qDebug() << "Test8 Error: Write failed";
+        return;
+    }
+    qint64 elapsed = timer.elapsed();
+
+    // Read back write data
+    uint8_t read_data[0x130];
+    if (ReadTargetMemory(0x8005000, 0x130, read_data) != BOOT_OK) {
         qDebug() << "Test8 Error: Read failed";
         return;
     }
 
     // Check if read data matches written data
-    if (memcmp(write_data, read_data, 304) != 0) {
+    if (memcmp(write_data, read_data, 0x130) != 0) {
         qDebug() << "Test8 Error: Read data does not match written data";
         return;
     }
+
+    qDebug() << "Test8: Passed" << ", write latency:" << elapsed << "ms";
 }
 
 int main(int argc, char *argv[])
@@ -376,8 +389,8 @@ int main(int argc, char *argv[])
     //Test5();
 
     // host.c tests
-    //Test6();
-    //Test7();
+    Test6();
+    Test7();
     Test8();
 
     return a.exec();

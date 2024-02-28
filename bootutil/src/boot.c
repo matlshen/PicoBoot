@@ -195,9 +195,9 @@ void WriteMemory(void) {
         ComAck();
     }
 
-    // Receive write data in 255 byte chunks
+    // Receive write data in 256 byte chunks
     while (bytes_remaining > 0) {
-        uint16_t bytes_to_receive = (bytes_remaining > 255) ? 255 : bytes_remaining;
+        uint16_t bytes_to_receive = (bytes_remaining > 256) ? 256 : bytes_remaining;
 
         // Receive chunk data
         if (ComReceive(data, bytes_to_receive, 100) != BOOT_OK) {
@@ -207,9 +207,9 @@ void WriteMemory(void) {
 
         bytes_remaining -= bytes_to_receive;
 
-        // If 255 bytes have been received or this is last chunk,
+        // If 256 bytes have been received or this is last chunk,
         // receive the checksum and verify
-        if (bytes_to_receive == 255 || bytes_remaining == 0) {
+        if (bytes_to_receive == 256 || bytes_remaining == 0) {
             uint32_t received_checksum;
             if (ComReceive((uint8_t*)&received_checksum, 4, 100) != BOOT_OK) {
                 ComNack();
@@ -258,9 +258,9 @@ void ReadMemory(void) {
         ComAck();
     }
 
-    // Read data from flash into buffer in 255 byte chunks
+    // Read data from flash into buffer in 256 byte chunks
     while (bytes_remaining > 0) {
-        uint8_t current_read_size = (bytes_remaining > 255) ? 255 : bytes_remaining;
+        uint16_t current_read_size = (bytes_remaining > 256) ? 256 : bytes_remaining;
 
         if (FlashRead(end_address - bytes_remaining, data, current_read_size) != BOOT_OK) {
             ComNack();

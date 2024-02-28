@@ -44,7 +44,7 @@ Boot_StatusTypeDef UARTInit(void) {
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     // Enable receive
     LL_USART_EnableDirectionRx(UARTx);
 
@@ -73,7 +73,7 @@ Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_m
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     // first_byte is used to determine if we should wait for the full timeout period
     bool first_byte = true;
 

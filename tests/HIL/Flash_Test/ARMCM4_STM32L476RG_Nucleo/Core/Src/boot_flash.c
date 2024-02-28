@@ -128,28 +128,14 @@ Boot_StatusTypeDef FlashWrite(uint32_t address, const void *data, uint32_t size)
         return BOOT_ADDRESS_ERROR;
     }
 
-    // Get minimum alignmnet of address and size
-    uint32_t alignment = FlashUtil_GetRangeAlignment(address, size);
-    uint32_t type_program;
-    switch (alignment) {
-        case 0x8:
-            type_program = FLASH_TYPEPROGRAM_DOUBLEWORD;
-            break;
-        case 0x100:
-            type_program = FLASH_TYPEPROGRAM_FAST;
-            break;
-        default:
-            return BOOT_ADDRESS_ERROR;
-    }
-
     // Unlock flash
     if (HAL_FLASH_Unlock() != HAL_OK) {
         return BOOT_ERROR;
     }
 
     // Write data to Flash
-    for (uint32_t i = 0; i < size; i += alignment) {
-        if (HAL_FLASH_Program(type_program, address + i, *(uint64_t*)(data+i)) != HAL_OK) {
+    for (uint32_t i = 0; i < size; i += 8) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address + i, *(uint64_t*)(data+i)) != HAL_OK) {
             return BOOT_ERROR;
         }
     }
