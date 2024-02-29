@@ -18,7 +18,8 @@ void FromFlashPacket(uint32_t *address, uint16_t *size, const uint8_t *data);
 
 bool FlashUtil_IsRangeValid(uint32_t address, uint32_t size);
 bool FlashUtil_IsPageAligned(uint32_t value);
-uint32_t FlashUtil_GetPage(uint32_t address);
+uint32_t FlashUtil_RoundToPage(uint32_t value);
+uint32_t FlashUtil_GetPageNum(uint32_t address);
 uint32_t FlashUtil_GetNumPages(uint32_t size);
 uint32_t FlashUtil_GetRangeAlignment(uint32_t address, uint32_t size);
 

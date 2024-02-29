@@ -79,7 +79,7 @@ Boot_StatusTypeDef FlashErase(uint32_t address, uint32_t size) {
     FLASH_EraseInitTypeDef erase_init = {0};
     erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
     erase_init.Banks = FLASH_BANK_1;
-    erase_init.Page = FlashUtil_GetPage(address);
+    erase_init.Page = FlashUtil_GetPageNum(address);
     erase_init.NbPages = FlashUtil_GetNumPages(size);
 
     uint32_t page_error = 0;

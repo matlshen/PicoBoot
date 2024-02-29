@@ -55,11 +55,21 @@ TEST(FlashUtil, IsPageAligned) {
     EXPECT_EQ(FlashUtil_IsPageAligned(0x8000020), false);
 }
 
+TEST(FLashUtil, RoundToPage) {
+    // Page aligned
+    EXPECT_EQ(FlashUtil_RoundToPage(0x8004000), 0x8004000);
+    EXPECT_EQ(FlashUtil_RoundToPage(0x1800), 0x1800);
+
+    // Not page aligned
+    EXPECT_EQ(FlashUtil_RoundToPage(0x8003FFF), 0x8004000);
+    EXPECT_EQ(FlashUtil_RoundToPage(0x8000020), 0x8000800);
+}
+
 TEST(FlashUtil, GetPage) {
-    EXPECT_EQ(FlashUtil_GetPage(0x8000000), 0);
-    EXPECT_EQ(FlashUtil_GetPage(0x80007FF), 0);
-    EXPECT_EQ(FlashUtil_GetPage(0x8000800), 1);
-    EXPECT_EQ(FlashUtil_GetPage(0x807F800), 255);
+    EXPECT_EQ(FlashUtil_GetPageNum(0x8000000), 0);
+    EXPECT_EQ(FlashUtil_GetPageNum(0x80007FF), 0);
+    EXPECT_EQ(FlashUtil_GetPageNum(0x8000800), 1);
+    EXPECT_EQ(FlashUtil_GetPageNum(0x807F800), 255);
 }
 
 TEST(FlashUtil, GetNumPages) {

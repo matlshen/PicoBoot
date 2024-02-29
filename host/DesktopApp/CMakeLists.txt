@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(QtSerialApp VERSION 0.1 LANGUAGES CXX)
+project(DesktopApp VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -14,49 +14,49 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort)
 
 set(PROJECT_SOURCES
         main.cpp
-        MainWindow.cpp
-        MainWindow.h
+        mainwindow.cpp
+        mainwindow.h
         mainwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(QtSerialApp
+    qt_add_executable(DesktopApp
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        SerialPort.h SerialPort.cpp
-        BootTarget.h BootTarget.cpp
-
     )
 # Define target properties for Android with Qt 6 as:
-#    set_property(TARGET QtSerialApp APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#    set_property(TARGET DesktopApp APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(QtSerialApp SHARED
+        add_library(DesktopApp SHARED
             ${PROJECT_SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(QtSerialApp
+        add_executable(DesktopApp
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(QtSerialApp PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::SerialPort
+add_subdirectory(../../bootutil ${CMAKE_CURRENT_BINARY_DIR}/bootutil)
+
+target_link_libraries(DesktopApp
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+    PRIVATE Qt${QT_VERSION_MAJOR}::SerialPort
+    bootlib
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.QtSerialApp)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.DesktopApp)
 endif()
-set_target_properties(QtSerialApp PROPERTIES
+set_target_properties(DesktopApp PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -65,12 +65,12 @@ set_target_properties(QtSerialApp PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS QtSerialApp
+install(TARGETS DesktopApp
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(QtSerialApp)
+    qt_finalize_executable(DesktopApp)
 endif()
