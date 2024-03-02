@@ -3,22 +3,24 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <memory.h>
 #include "boot_config.h"
 #include "boot_types.h"
 #include "ll_util.h"
 #include "flash_util.h"
 #include "com.h"
 #include "crc32.h"
+#include "sha256.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void BootStateMachine(void);
+
 static void Init(void);
 static void WaitForConnection(void);
 static void WaitForCommand(void);
-
 static void ChangeSpeed(void);
 static void ChangeNodeId(void);
 static void GetConfig(void);
@@ -29,6 +31,7 @@ static void ReadMemory(void);
 static void Verify(void);
 static void Go(void);
 
+bool VerifySlot(uint8_t slot);
 static void HandleTimeout(void);
 
 #ifdef __cplusplus

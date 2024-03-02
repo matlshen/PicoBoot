@@ -48,7 +48,7 @@ typedef struct {
     uint32_t slot_size;         /* Application slot size */
     uint32_t image_size;        /* Application image size */
     Version_TypeDef version;    /* Application image version */
-    uint32_t hash;              /* SHA256 of image */
+    uint32_t hash[8];           /* SHA256 of image */
     uint32_t signature;         /* ECDSA signature of hash output */
 } Slot_ConfigTypeDef;
 
@@ -59,7 +59,7 @@ typedef struct {
     .slot_size = 0x8000, \
     .image_size = 0, \
     .version = {0, 0}, \
-    .hash = 0, \
+    .hash = {0}, \
     .signature = 0, \
 };
 

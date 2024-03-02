@@ -61,7 +61,11 @@ add_subdirectory(../../../../bootutil ${CMAKE_CURRENT_BINARY_DIR}/bootutil)
 
 # Add executable
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${ASM_SOURCES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    ${MCU_MODEL}
+    USE_HAL_DRIVER
+    USE_FULL_LL_DRIVER)
+target_compile_definitions(bootlib PUBLIC
     ${MCU_MODEL}
     USE_HAL_DRIVER
     USE_FULL_LL_DRIVER)

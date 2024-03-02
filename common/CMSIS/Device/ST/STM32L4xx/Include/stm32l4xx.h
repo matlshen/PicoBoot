@@ -120,7 +120,6 @@
 /** @addtogroup Device_Included
   * @{
   */
-
 #if defined(STM32L412xx)
   #include "stm32l412xx.h"
 #elif defined(STM32L422xx)

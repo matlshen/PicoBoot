@@ -19,6 +19,9 @@ public slots:
     void ReadSlot(uint32_t address, uint16_t size);
     void GetFileDataSlot(QString fielname);
     void DownloadSlot();
+    void VerifySlot(uint8_t slot);
+    void GoSlot();
+    void ResetSlot();
 signals:
     void SendLog(QString msg, const QBrush& color = Qt::black);
     void UpdateProgress(int progress);
@@ -27,6 +30,7 @@ public:
     static QSerialPort* _serial;
     QByteArray _data;
     int _data_size;
+    QByteArray _data_hash;
 };
 
 #endif // IOTHREAD_H

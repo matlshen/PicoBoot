@@ -32,7 +32,7 @@
             "name": "STM32",
             "intelliSenseMode": "gcc-arm",
             "includePath": [
-                "boot/${env:project_name}/Core/Inc",
+                "tests/HIL/StateMachine_Test/${env:project_name}/Core/Inc",
                 "common/CMSIS/Device/ST/${env:MCU_FAMILY}/Include",
                 "common/CMSIS/Include",
                 "common/${env:MCU_FAMILY}_HAL_Driver/Inc",
@@ -41,7 +41,7 @@
             ],
             "browse": {
                 "path": [
-                    "boot/${env:project_name}/Core/Src",
+                    "tests/HIL/StateMachine_Test/${env:project_name}/Core/Src",
                     "common/${env:MCU_FAMILY}_HAL_Driver/Src"
                 ],
                 "limitSymbolsToIncludedHeaders": true

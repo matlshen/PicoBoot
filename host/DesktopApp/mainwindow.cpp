@@ -109,6 +109,7 @@ void MainWindow::on_lineEdit_returnPressed()
         // Read 8 bytes if size not specified
         if (tokens.size() < 2) {
             UpdateLog("Usage: read <address> [size]");
+            return;
         }
 
         // Remove "0x" from the address
@@ -131,6 +132,22 @@ void MainWindow::on_lineEdit_returnPressed()
             emit ReadSignal(address, size);
         }
     }
+    else if (tokens.at(0) == "download")
+        emit DownloadSignal();
+    else if (tokens.at(0) == "verify") {
+        // TODO: finish this
+        if (tokens.size() != 2) {
+            UpdateLog("Usage: verify <slotn>");
+            return;
+        }
+
+        int slot_num = tokens.at(1).right(1)[0].digitValue();
+        emit VerifySignal(slot_num);
+    }
+    else if (tokens.at(0) == "go")
+        emit GoSignal();
+    else if (tokens.at(0) == "reset")
+        emit ResetSignal();
     else
         UpdateLog("Unknown command: " + command, Qt::red);
 }
@@ -146,5 +163,11 @@ void MainWindow::on_fileLineEdit_editingFinished()
 {
     QString filename = ui->fileLineEdit->text();
     emit ReadFileSignal(filename);
+}
+
+
+void MainWindow::on_resetBtn_clicked()
+{
+    emit ResetSignal();
 }
 

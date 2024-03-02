@@ -114,7 +114,7 @@ static void WaitForCommand(void) {
         // If command, handle command and go back to waiting for command
         switch (msg_id) {
             case MSG_ID_CONN_REQ:
-                // TODO: Change this behavior
+                // TODO: Change this behavior (add node ID logic)
                 ComAck();
                 break;
             case MSG_ID_CHANGE_SPEED:
@@ -126,7 +126,6 @@ static void WaitForCommand(void) {
                 ChangeNodeId();
                 break;
             case MSG_ID_GET_CONFIG:
-                // TODO: Implement this
                 GetConfig();
                 break;
             case MSG_ID_SET_CONFIG:
@@ -142,15 +141,16 @@ static void WaitForCommand(void) {
                 ReadMemory();
                 break;
             case MSG_ID_VERIFY:
-                // TODO: Implement this
                 Verify();
                 break;
             case MSG_ID_GO:
-                // TODO: Implement this
+                Go();
                 break;
             case MSG_ID_RESET:
                 // Directly call low-level function
-                // Reset can't return or error
+                // Reset can't return or produce error
+                ComAck();
+                ComAck(); // Ack twice to force transmit buffer flush, TODO: Make this better
                 SystemReset();
                 break;
             default:
@@ -215,11 +215,11 @@ void SetConfig(void) {
         return;
     }
     // Write new configuration to flash
-    if (FlashErase((uint32_t)p_cfg, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef))) != BOOT_OK) {
+    if (BootFlashErase((uint32_t)p_cfg, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef))) != BOOT_OK) {
         ComNack();
         return;
     }
-    if (FlashWrite((uint32_t)p_cfg, (uint8_t *)&new_config, sizeof(Boot_ConfigTypeDef)) != BOOT_OK) {
+    if (BootFlashWrite((uint32_t)p_cfg, (uint8_t *)&new_config, sizeof(Boot_ConfigTypeDef)) != BOOT_OK) {
         ComNack();
         return;
     }
@@ -351,18 +351,58 @@ void ReadMemory(void) {
     ComAck();
 }
 
-void Verify(void) {
-    // TODO: Implement this
-    Boot_MsgIdTypeDef tx_msg_id = MSG_ID_VERIFY;
-    uint8_t tx_data[] = {0x55, 0x66, 0x77, 0x88};
-    uint8_t tx_length = 4;
-    ComTransmitPacket(tx_msg_id, tx_data, tx_length);
-    ComNack();
+static void Verify(void) {
+    if (length != 1) {
+        ComNack();
+        return;
+    }
+    
+    if (data[0] > BL_NUM_SLOTS) {
+        ComNack();
+        return;
+    }
+
+    // Verify application hash in slot specified
+    if (!VerifySlot(data[0])) {
+        ComNack();
+        return;
+    }
+    
+    ComAck();
 }
 
 void Go(void) {
-    // TODO: Implement this
-    ComNack();
+    // Verify application hash in slot 0
+    if (!VerifySlot(0)) {
+        ComNack();
+        return;
+    }
+
+    // Send ack twice to force transmit buffer flush
+    ComAck();
+    ComAck();
+
+    // Go to application
+    JumpToApp(p_cfg->slot_list[0].load_address);
+}
+
+bool VerifySlot(uint8_t slot) {
+    // Verify application in slot specified
+    uint32_t start_addr = p_cfg->slot_list[data[0]].load_address;
+    uint32_t size = p_cfg->slot_list[data[0]].image_size;
+
+    // Compute sha256 hash of application
+    uint8_t computed_hash[SHA256_BLOCK_SIZE];
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, (uint8_t *)start_addr, size);
+    sha256_final(&ctx, computed_hash);
+
+    // Compare computed hash with stored hash
+    if (memcmp(computed_hash, p_cfg->slot_list[data[0]].hash, SHA256_BLOCK_SIZE) != 0)
+        return false;
+    else
+        return true;
 }
 
 void HandleTimeout(void) {

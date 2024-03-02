@@ -28,6 +28,9 @@ signals:
     void ReadSignal(uint32_t address, uint16_t size);
     void ReadFileSignal(QString filename);
     void DownloadSignal();
+    void VerifySignal(uint8_t slot);
+    void GoSignal();
+    void ResetSignal();
 
 private slots:
     void on_browseBtn_clicked();
@@ -37,6 +40,8 @@ private slots:
     void on_programBtn_clicked();
 
     void on_fileLineEdit_editingFinished();
+
+    void on_resetBtn_clicked();
 
 private:
     Ui::MainWindow *ui;
