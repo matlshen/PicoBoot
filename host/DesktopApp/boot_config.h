@@ -10,7 +10,7 @@ extern "C" {
 
 /* Memory Information */
 #define BL_FLASH_START_ADDRESS      0x8000000U
-#define BL_FLASH_PAGE_SIZE          0x400
+#define BL_FLASH_PAGE_SIZE          0x800
 #define BL_FLASH_SECTOR_SIZE        0x1000
 #define BL_FLASH_SIZE               0x00020000U
 #define BL_FLASH_END_ADDRESS        BL_FLASH_START_ADDRESS + BL_FLASH_SIZE

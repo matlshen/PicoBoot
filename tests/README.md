@@ -1,0 +1,1 @@
+Add -G "MSYS Makefiles" when building tests

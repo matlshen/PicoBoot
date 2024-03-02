@@ -27,9 +27,15 @@ add_executable(crc32_test Crc32Test.cpp ../bootutil/src/crc32.c)
 target_include_directories(crc32_test PRIVATE ../bootutil/inc)
 target_link_libraries(crc32_test GTest::gtest_main)
 
+# sha256_test
+add_executable(sha256_test Sha256Test.cpp ../bootutil/src/sha256.c)
+target_include_directories(sha256_test PRIVATE ../bootutil/inc)
+target_link_libraries(sha256_test GTest::gtest_main)
+
 
 include(GoogleTest)
 gtest_discover_tests(
   flash_util_test
   crc32_test
+  sha2256_test
 )

@@ -6,6 +6,7 @@
 #include "boot_config.h"
 #include "boot_types.h"
 #include "ll_util.h"
+#include "flash_util.h"
 #include "com.h"
 #include "crc32.h"
 
@@ -21,6 +22,7 @@ static void WaitForCommand(void);
 static void ChangeSpeed(void);
 static void ChangeNodeId(void);
 static void GetConfig(void);
+static void SetConfig(void);
 static void EraseMemory(void);
 static void WriteMemory(void);
 static void ReadMemory(void);

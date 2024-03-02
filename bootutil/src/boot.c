@@ -45,7 +45,7 @@ static uint8_t length;
 
 // Ignore this if running emulator
 #ifdef TARGET
-void Init(void) {
+static void Init(void) {
     // Initialize communication interface
     ComInit();
 
@@ -65,6 +65,7 @@ void Init(void) {
         Boot_ConfigTypeDef default_cfg = {0};
         Version_TypeDef default_version = {BL_VERSION_MAJOR, BL_VERSION_MINOR};
         default_cfg.version = default_version;
+        default_cfg.app_start_address = BL_APP_START_ADDRESS;
         Slot_ConfigTypeDef default_slot = DEFAULT_SLOT_CONFIG;
         default_cfg.slot_list[0] = default_slot;
 
@@ -79,13 +80,13 @@ void Init(void) {
 }
 #else
 // If using emulator, don't load configuration
-void Init(void) {
+static void Init(void) {
     // Initialize communication interface
     ComInit();
 }
 #endif
 
-void WaitForConnection(void) {
+static void WaitForConnection(void) {
     // Wait for connection
     status = ComReceivePacket(&msg_id, data, &length, BL_TIMEOUT_MS);
 
@@ -105,7 +106,7 @@ void WaitForConnection(void) {
         ComNack();
 }
 
-void WaitForCommand(void) {
+static void WaitForCommand(void) {
     // Wait for command
     status = ComReceivePacket(&msg_id, data, &length, BL_COMMAND_TIMEOUT_MS);
 
@@ -127,6 +128,9 @@ void WaitForCommand(void) {
             case MSG_ID_GET_CONFIG:
                 // TODO: Implement this
                 GetConfig();
+                break;
+            case MSG_ID_SET_CONFIG:
+                SetConfig();
                 break;
             case MSG_ID_MEM_ERASE:
                 EraseMemory();
@@ -185,6 +189,42 @@ void ChangeNodeId(void) {
 void GetConfig(void) {
     ComAck();
     ComTransmit((uint8_t *)p_cfg, sizeof(Boot_ConfigTypeDef), 100);
+    ComAck();
+}
+
+void SetConfig(void) {
+    // If length of received packet is not 4, send nack and return
+    if (length != 0) {
+        ComNack();
+        return;
+    } 
+    else
+        ComAck();
+
+    // Receive new configuration
+    Boot_ConfigTypeDef new_config;
+    if (ComReceive((uint8_t *)&new_config, sizeof(Boot_ConfigTypeDef), 100) != BOOT_OK) {
+        ComNack();
+        return;
+    }
+
+    // Verify CRC of new configuration
+    uint32_t calculated_crc = crc32((uint8_t *)&new_config + 4, sizeof(Boot_ConfigTypeDef) - 4, INITIAL_CRC);
+    if (calculated_crc != new_config.crc32) {
+        ComNack();
+        return;
+    }
+    // Write new configuration to flash
+    if (FlashErase((uint32_t)p_cfg, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef))) != BOOT_OK) {
+        ComNack();
+        return;
+    }
+    if (FlashWrite((uint32_t)p_cfg, (uint8_t *)&new_config, sizeof(Boot_ConfigTypeDef)) != BOOT_OK) {
+        ComNack();
+        return;
+    }
+
+    // If set operation was successful, send ack
     ComAck();
 }
 

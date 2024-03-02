@@ -17,11 +17,16 @@ public slots:
     void GetConfigSlot();
     void EraseSlot(uint32_t address, uint16_t size);
     void ReadSlot(uint32_t address, uint16_t size);
+    void GetFileDataSlot(QString fielname);
+    void DownloadSlot();
 signals:
     void SendLog(QString msg, const QBrush& color = Qt::black);
+    void UpdateProgress(int progress);
 
 public:
     static QSerialPort* _serial;
+    QByteArray _data;
+    int _data_size;
 };
 
 #endif // IOTHREAD_H

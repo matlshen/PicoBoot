@@ -32,6 +32,10 @@ void MainWindow::UpdateLog(QString msg, const QBrush& color) {
     ui->logTextEdit->ensureCursorVisible();
 }
 
+void MainWindow::UpdateProgress(int progress) {
+    ui->progressBar->setValue(progress);
+}
+
 void MainWindow::on_browseBtn_clicked()
 {
     QString filter = "Binary files (*.bin);;Hex files (*.hex)";
@@ -42,6 +46,7 @@ void MainWindow::on_browseBtn_clicked()
     if (!filename.isEmpty()) {
         ui->fileLineEdit->setText(filename);
     }
+    emit ReadFileSignal(filename);
 }
 
 void MainWindow::LoadPorts() {
@@ -128,5 +133,18 @@ void MainWindow::on_lineEdit_returnPressed()
     }
     else
         UpdateLog("Unknown command: " + command, Qt::red);
+}
+
+
+void MainWindow::on_programBtn_clicked()
+{
+    emit DownloadSignal();
+}
+
+
+void MainWindow::on_fileLineEdit_editingFinished()
+{
+    QString filename = ui->fileLineEdit->text();
+    emit ReadFileSignal(filename);
 }
 

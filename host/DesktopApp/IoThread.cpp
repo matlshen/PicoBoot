@@ -1,5 +1,7 @@
 #include "IoThread.h"
 #include "host.h"
+#include <QFile>
+#include <QCryptographicHash>
 
 QSerialPort* IoThread::_serial = nullptr;
 
@@ -35,35 +37,32 @@ void IoThread::ConnectSlot(QString portName) {
 
     // Open serial port
     if (_serial->open(QIODevice::ReadWrite)) {
-        emit SendLog("Successfully opened port " + portName);
+        emit SendLog("Opened port " + portName, Qt::blue);
     } else {
-        emit SendLog("Failed to open port " + portName);
+        emit SendLog("Failed to open port " + portName, Qt::red);
     }
-
 
     // Connect to target
     Boot_StatusTypeDef status = ConnectToTarget();
     if (status == BOOT_OK)
-        emit SendLog("Connected to target");
+        emit SendLog("Connected to target", Qt::blue);
     else if (status == BOOT_TIMEOUT)
         emit SendLog("Target timed out when attempting to connect", Qt::red);
     else
         emit SendLog("Error connecting to target", Qt::red);
 
-    // if (status == BOOT_OK)
-    //     qDebug("Connected to target");
-    // else if (status == BOOT_TIMEOUT)
-    //     qDebug("ConnectToTarget() timeout");
-    // else if (status == BOOT_ERROR)
-    //     qDebug("ConnectToTarget() error");
+    // Get target configuration
+    GetConfigSlot();
 }
 
 void IoThread::GetConfigSlot() {
-    Boot_ConfigTypeDef config;
-    Boot_StatusTypeDef status = GetTargetConfig(&config);
+    Boot_StatusTypeDef status = GetTargetConfig();
 
-    if (status == BOOT_OK)
-        emit SendLog("Successfully retrieved target config");
+    if (status == BOOT_OK) {
+        emit SendLog("Retrieved target configuration", Qt::blue);
+        emit SendLog("bootloader version: " + QString::number(target_config.version.major) + "." + QString::number(target_config.version.minor));
+        emit SendLog("Application section start: 0x" + QString::number(target_config.app_start_address, 16).toUpper());
+    }
     else if (status == BOOT_TIMEOUT)
         emit SendLog("GetConfig operation timed out", Qt::red);
     else
@@ -74,7 +73,7 @@ void IoThread::EraseSlot(uint32_t address, uint16_t size) {
     Boot_StatusTypeDef status = EraseTargetMemory(address, size);
 
     if (status == BOOT_OK)
-        emit SendLog("Erase operation successful");
+        emit SendLog("Erase operation successful", Qt::blue);
     else if (status == BOOT_TIMEOUT)
         emit SendLog("Erase operation timed out", Qt::red);
     else
@@ -86,7 +85,7 @@ void IoThread::ReadSlot(uint32_t address, uint16_t size) {
     Boot_StatusTypeDef status = ReadTargetMemory(address, size, data);
 
     if (status == BOOT_OK) {
-        emit SendLog("Read operation successful");
+        emit SendLog("Target read data:", Qt::blue);
         // Convert bytes to hex string
         QString hexString;
         for (int i = 0; i < size; i++) {
@@ -103,4 +102,89 @@ void IoThread::ReadSlot(uint32_t address, uint16_t size) {
         emit SendLog("Error reading memory", Qt::red);
 
     delete[] data;
+}
+
+void IoThread::GetFileDataSlot(QString filename) {
+    if (filename.isEmpty())
+        return;
+
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly)) {
+        emit SendLog("Error opening file " + filename, Qt::red);
+        return;
+    }
+
+    // Read binary data from file
+    _data = file.readAll();
+    _data_size = _data.size();
+    file.close();
+
+    emit SendLog("Binary size: " + QString::number(_data_size));
+}
+
+void IoThread::DownloadSlot() {
+    if (_data.isEmpty()) {
+        emit SendLog("No data to download", Qt::red);
+        return;
+    }
+
+    Boot_StatusTypeDef status;
+
+    // // Erase section of memory where application will be written
+    // Boot_StatusTypeDef status = EraseTargetMemory(target_config.app_start_address, FlashUtil_RoundUpToPage(_data_size));
+    // if (status != BOOT_OK) {
+    //     emit SendLog("Error erasing memory", Qt::red);
+    //     return;
+    // }
+
+    // // Write binary data to target in 256 byte chunks
+    // int num_chunks = _data_size / 256;
+    // for (int i = 0; i < num_chunks; i++) {
+    //     status = WriteTargetMemory(target_config.app_start_address + i*256, 256, (uint8_t*)_data.data() + i*256);
+    //     if (status == BOOT_TIMEOUT) {
+    //         emit SendLog("Download operation timed out", Qt::red);
+    //         return;
+    //     }
+    //     else if (status != BOOT_OK) {
+    //         emit SendLog("Error writing memory", Qt::red);
+    //         return;
+    //     }
+
+    //     // Update progress bar
+    //     emit UpdateProgress((i+1) * 100 / num_chunks);
+    // }
+    // // Write remaining data
+    // status = WriteTargetMemory(target_config.app_start_address + num_chunks*256, _data_size - num_chunks*256, (uint8_t*)_data.data() + num_chunks*256);
+    // if (status == BOOT_OK)
+    //     emit SendLog("Download operation successful", Qt::blue);
+    // else if (status == BOOT_TIMEOUT)
+    //     emit SendLog("Download operation timed out", Qt::red);
+    // else
+    //     emit SendLog("Error writing memory", Qt::red);
+
+    // emit UpdateProgress(100);
+
+
+
+    // TODO: Write new configuration to target
+    // Add all the parameters
+
+    target_config.slot_list[target_config.active_slot].load_address = target_config.app_start_address;
+    target_config.slot_list[target_config.active_slot].image_size = _data_size;
+
+    // Compute sha256 hash of binary data
+    QByteArray hash = QCryptographicHash::hash(_data, QCryptographicHash::Sha256);
+    emit SendLog("Binary hash: " + hash.toHex());
+    // Write hash to target config
+    target_config.slot_list[target_config.active_slot].hash = static_cast<uint32_t>(
+        (hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]);
+
+    // Write new configuration to target
+    status = SetTargetConfig();
+    if (status == BOOT_OK)
+        emit SendLog("Wrote new configuration to target", Qt::blue);
+    else if (status == BOOT_TIMEOUT)
+        emit SendLog("SetConfig operation timed out", Qt::red);
+    else
+        emit SendLog("Error writing new configuration to target", Qt::red);
 }

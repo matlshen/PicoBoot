@@ -1,6 +1,8 @@
 #include "host.h"
 #include "flash_util.h"
 
+Boot_ConfigTypeDef target_config;
+
 Boot_StatusTypeDef ConnectToTarget(void) {
     // Send empty connection request
     ComTransmitPacket(MSG_ID_CONN_REQ, NULL, 0);
@@ -12,7 +14,7 @@ Boot_StatusTypeDef ConnectToTarget(void) {
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef GetTargetConfig(Boot_ConfigTypeDef *config) {
+Boot_StatusTypeDef GetTargetConfig() {
     // Send get config request
     ComTransmitPacket(MSG_ID_GET_CONFIG, NULL, 0);
 
@@ -21,7 +23,30 @@ Boot_StatusTypeDef GetTargetConfig(Boot_ConfigTypeDef *config) {
         return BOOT_ERROR;
 
     // Receive config
-    if (ComReceive((uint8_t *)config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComReceive((uint8_t *)&target_config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Wait for ACK
+    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Check CRC on target config
+    if (crc32((uint8_t *)&target_config+4, sizeof(Boot_ConfigTypeDef)-4, INITIAL_CRC) != target_config.crc32)
+        return BOOT_ERROR;
+
+    return BOOT_OK;
+}
+
+Boot_StatusTypeDef SetTargetConfig() {
+    // Send set config request
+    ComTransmitPacket(MSG_ID_SET_CONFIG, NULL, 0);
+
+    // Wait for ACK
+    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Send config
+    if (ComTransmit((uint8_t *)&target_config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Wait for ACK
@@ -115,7 +140,7 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
  * @retval BOOT_OK if ACK received, BOOT_ERROR otherwise
 */
 Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms) {
-    Boot_MsgIdTypeDef msg_id = MSG_ID_ACK;
+    Boot_MsgIdTypeDef msg_id = MSG_ID_NACK;
     uint8_t length = 0xFF;
 
     // Wait for ack
@@ -129,6 +154,22 @@ Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms) {
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef HelloWorld() {
+/**
+ * @brief  Wait for an NACK response for the specified timeout period
+ * @param  timeout_ms: Maximum time to wait for an ACK response
+ * @retval BOOT_OK if ACK received, BOOT_ERROR otherwise
+*/
+Boot_StatusTypeDef WaitForNack(uint32_t timeout_ms) {
+    Boot_MsgIdTypeDef msg_id = MSG_ID_ACK;
+    uint8_t length = 0xFF;
+
+    // Wait for ack
+    if (ComReceivePacket(&msg_id, NULL, &length, timeout_ms) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Check if received message is an ACK
+    if (msg_id != MSG_ID_NACK || length != 0)
+        return BOOT_ERROR;
+
     return BOOT_OK;
 }

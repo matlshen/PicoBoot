@@ -18,18 +18,25 @@ public:
     ~MainWindow();
 
 public slots:
-    void UpdateLog(QString msg, const QBrush& color = Qt::black); // TODO
+    void UpdateLog(QString msg, const QBrush& color = Qt::black);
+    void UpdateProgress(int progress);
 
 signals:
     void ConnectSignal(QString portName);
+    void GetConfigSignal();
     void EraseSignal(uint32_t address, uint16_t size);
     void ReadSignal(uint32_t address, uint16_t size);
-    void GetConfigSignal();
+    void ReadFileSignal(QString filename);
+    void DownloadSignal();
 
 private slots:
     void on_browseBtn_clicked();
     void on_connectBtn_clicked();
-    void on_lineEdit_returnPressed(); // TODO
+    void on_lineEdit_returnPressed();
+
+    void on_programBtn_clicked();
+
+    void on_fileLineEdit_editingFinished();
 
 private:
     Ui::MainWindow *ui;

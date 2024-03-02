@@ -21,8 +21,11 @@ int main(int argc, char *argv[])
     QObject::connect(&w , &MainWindow::GetConfigSignal, &worker, &IoThread::GetConfigSlot);
     QObject::connect(&w, &MainWindow::EraseSignal, &worker, &IoThread::EraseSlot);
     QObject::connect(&w, &MainWindow::ReadSignal, &worker, &IoThread::ReadSlot);
+    QObject::connect(&w, &MainWindow::ReadFileSignal, &worker, &IoThread::GetFileDataSlot);
+    QObject::connect(&w, &MainWindow::DownloadSignal, &worker, &IoThread::DownloadSlot);
 
     QObject::connect(&worker, &IoThread::SendLog, &w, &MainWindow::UpdateLog);
+    QObject::connect(&worker, &IoThread::UpdateProgress, &w, &MainWindow::UpdateProgress);
 
     // Start thread
     io_thread.start();

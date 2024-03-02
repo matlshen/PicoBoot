@@ -63,6 +63,7 @@ TEST(FLashUtil, RoundUpToPage) {
     // Not page aligned
     EXPECT_EQ(FlashUtil_RoundUpToPage(0x8003FFF), 0x8004000);
     EXPECT_EQ(FlashUtil_RoundUpToPage(0x8000020), 0x8000800);
+    EXPECT_EQ(FlashUtil_RoundUpToPage(0x2998), 0x3000);
 }
 
 TEST(FLashUtil, RoundDownToPage) {
