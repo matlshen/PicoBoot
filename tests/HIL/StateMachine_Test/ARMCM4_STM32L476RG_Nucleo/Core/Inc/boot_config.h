@@ -5,8 +5,12 @@
 extern "C" {
 #endif
 
-#define HOST
+#define TARGET
 // #define TARGET
+
+/* Bootloader information */
+#define BL_VERSION_MAJOR    0U
+#define BL_VERSION_MINOR    1U
 
 /* Memory Information */
 #define BL_FLASH_START_ADDRESS      0x8000000U

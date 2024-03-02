@@ -58,6 +58,18 @@ void IoThread::ConnectSlot(QString portName) {
     //     qDebug("ConnectToTarget() error");
 }
 
+void IoThread::GetConfigSlot() {
+    Boot_ConfigTypeDef config;
+    Boot_StatusTypeDef status = GetTargetConfig(&config);
+
+    if (status == BOOT_OK)
+        emit SendLog("Successfully retrieved target config");
+    else if (status == BOOT_TIMEOUT)
+        emit SendLog("GetConfig operation timed out", Qt::red);
+    else
+        emit SendLog("Error getting target config", Qt::red);
+}
+
 void IoThread::EraseSlot(uint32_t address, uint16_t size) {
     Boot_StatusTypeDef status = EraseTargetMemory(address, size);
 

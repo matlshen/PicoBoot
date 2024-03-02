@@ -12,6 +12,25 @@ Boot_StatusTypeDef ConnectToTarget(void) {
     return BOOT_OK;
 }
 
+Boot_StatusTypeDef GetTargetConfig(Boot_ConfigTypeDef *config) {
+    // Send get config request
+    ComTransmitPacket(MSG_ID_GET_CONFIG, NULL, 0);
+
+    // Wait for ACK
+    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Receive config
+    if (ComReceive((uint8_t *)config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Wait for ACK
+    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        return BOOT_ERROR;
+
+    return BOOT_OK;
+}
+
 Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size) {
     // Send erase request
     uint8_t tx_data[6];

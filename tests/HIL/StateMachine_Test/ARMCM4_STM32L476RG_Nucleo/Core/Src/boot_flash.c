@@ -70,30 +70,7 @@ Boot_StatusTypeDef FlashErase(uint32_t address, uint32_t size) {
         return BOOT_ADDRESS_ERROR;
     }
 
-    // Unlock flash
-    if (HAL_FLASH_Unlock() != HAL_OK) {
-        return BOOT_ERROR;
-    }
-
-    // Erase flash
-    FLASH_EraseInitTypeDef erase_init = {0};
-    erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
-    erase_init.Banks = FLASH_BANK_1;
-    erase_init.Page = FlashUtil_GetPageNum(address);
-    erase_init.NbPages = FlashUtil_GetNumPages(size);
-
-    uint32_t page_error = 0;
-    if (HAL_FLASHEx_Erase(&erase_init, &page_error) != HAL_OK) {
-        return BOOT_ERROR;
-    }
-    if (page_error != 0xFFFFFFFF) {
-        return BOOT_FLASH_ERROR;
-    }
-
-    // Lock flash
-    HAL_FLASH_Lock();
-
-    return BOOT_OK;
+    return BootFlashErase(address, size);
 }
 
 /**
@@ -128,6 +105,50 @@ Boot_StatusTypeDef FlashWrite(uint32_t address, const void *data, uint32_t size)
         return BOOT_ADDRESS_ERROR;
     }
 
+    return BootFlashWrite(address, data, size);
+}
+
+/**
+ * @brief Unrestricted erase region of Flash memory.
+ * @param address Start address to erase. Must be page-aligned.
+ * @param size Number of bytes to erase. Must be page-aligned.
+ * @return BOOT_OK if successful, otherwise error code.
+*/
+Boot_StatusTypeDef BootFlashErase(uint32_t address, uint32_t size) {
+    // Unlock flash
+    if (HAL_FLASH_Unlock() != HAL_OK) {
+        return BOOT_ERROR;
+    }
+
+    // Erase flash
+    FLASH_EraseInitTypeDef erase_init = {0};
+    erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
+    erase_init.Banks = FLASH_BANK_1;
+    erase_init.Page = FlashUtil_GetPageNum(address);
+    erase_init.NbPages = FlashUtil_GetNumPages(size);
+
+    uint32_t page_error = 0;
+    if (HAL_FLASHEx_Erase(&erase_init, &page_error) != HAL_OK) {
+        return BOOT_ERROR;
+    }
+    if (page_error != 0xFFFFFFFF) {
+        return BOOT_FLASH_ERROR;
+    }
+
+    // Lock flash
+    HAL_FLASH_Lock();
+
+    return BOOT_OK;
+}
+
+/**
+ * @brief Unrestricted write to flash memory.
+ * @param address Start address to write to. Must be at least halfword-aligned.
+ * @param data Buffer to write data from.
+ * @param size Number of bytes to write. Must be at least halfword-aligned.
+ * @return BOOT_OK if successful, otherwise error code.
+*/
+Boot_StatusTypeDef BootFlashWrite(uint32_t address, const void *data, uint32_t size) {
     // Unlock flash
     if (HAL_FLASH_Unlock() != HAL_OK) {
         return BOOT_ERROR;

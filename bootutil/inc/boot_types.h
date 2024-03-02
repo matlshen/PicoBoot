@@ -33,10 +33,10 @@ typedef enum {
     MSG_ID_NACK = 0x5FU,
 } Boot_MsgIdTypeDef;
 
-struct version {
+typedef struct {
     uint8_t major;
     uint8_t minor;
-};
+} Version_TypeDef;
 
 /* 
  * Slot configuration section
@@ -46,20 +46,34 @@ typedef struct {
     uint32_t load_address;      /* Application start address */
     uint32_t slot_size;         /* Application slot size */
     uint32_t image_size;        /* Application image size */
-    struct version version;     /* Application image version */
+    Version_TypeDef version;    /* Application image version */
     uint32_t hash;              /* SHA256 of image */
     uint32_t signature;         /* ECDSA signature of hash output */
 } Slot_ConfigTypeDef;
 
+/* Default slot config */
+#define DEFAULT_SLOT_CONFIG { \
+    .slot_populated = false, \
+    .load_address = BL_APP_START_ADDRESS, \
+    .slot_size = 0x8000, \
+    .image_size = 0, \
+    .version = {0, 0}, \
+    .hash = 0, \
+    .signature = 0, \
+};
+
 /* 
  * Persistent configuration section
  * The boot_config struct is stored in the configuration area of flash
- * at address BL_CONFIG_ADDR.
+ * at first available slot below the application area.
+ * Make sure to doubleword alignt the struct so that it can be written into flash
+ * CRC is at the beginning so the location is predictable with padding at end
  */
-typedef struct {
-    uint32_t active_slot;
-    // Slot_ConfigTypeDef slots[BL_NUM_SLOTS]; TODO: Whyyyy
-    uint32_t crc32;
+typedef struct __attribute__((aligned(8))) {
+    uint32_t crc32;                 /* CRC32 of boot_config */
+    Version_TypeDef version;         /* Bootloader version */
+    uint32_t active_slot;           /* Active slot */
+    Slot_ConfigTypeDef slot_list[BL_NUM_SLOTS]; /* Slot configurations */
 } Boot_ConfigTypeDef;
 
 #ifdef __cplusplus

@@ -14,6 +14,7 @@ public:
 public slots:
     void work();
     void ConnectSlot(QString portName);
+    void GetConfigSlot();
     void EraseSlot(uint32_t address, uint16_t size);
     void ReadSlot(uint32_t address, uint16_t size);
 signals:

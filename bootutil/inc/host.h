@@ -8,6 +8,7 @@ extern "C" {
 #include "boot.h"
 
 Boot_StatusTypeDef ConnectToTarget(void);
+Boot_StatusTypeDef GetTargetConfig(Boot_ConfigTypeDef *config);
 Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size);
 Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *data);
 Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *data);

@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     QObject::connect(&io_thread, &QThread::started, &worker, &IoThread::work);
 
     QObject::connect(&w, &MainWindow::ConnectSignal, &worker, &IoThread::ConnectSlot);
+    QObject::connect(&w , &MainWindow::GetConfigSignal, &worker, &IoThread::GetConfigSlot);
     QObject::connect(&w, &MainWindow::EraseSignal, &worker, &IoThread::EraseSlot);
     QObject::connect(&w, &MainWindow::ReadSignal, &worker, &IoThread::ReadSlot);
 

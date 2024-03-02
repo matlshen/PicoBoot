@@ -83,8 +83,17 @@ bool FlashUtil_IsPageAligned(uint32_t value) {
  * @param value Value to round.
  * @return Rounded page-aligned value.
 */
-uint32_t FlashUtil_RoundToPage(uint32_t value) {
+uint32_t FlashUtil_RoundUpToPage(uint32_t value) {
     return (value + BL_FLASH_PAGE_SIZE - 1) & ~(BL_FLASH_PAGE_SIZE - 1);
+}
+
+/**
+ * @brief Round specified value down to next page boundary.
+ * @param value Value to round.
+ * @return Rounded page-aligned value.
+*/
+uint32_t FlashUtil_RoundDownToPage(uint32_t value) {
+    return value & ~(BL_FLASH_PAGE_SIZE - 1);
 }
 
 /**

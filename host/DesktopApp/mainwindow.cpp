@@ -76,6 +76,9 @@ void MainWindow::on_lineEdit_returnPressed()
     if (tokens.at(0) == "connect") {
         on_connectBtn_clicked();
     }
+    else if (tokens.at(0) == "getconfig") {
+        emit GetConfigSignal();
+    }
     else if (tokens.at(0) == "erase") {
         if (tokens.size() != 3) {
             UpdateLog("Usage: erase <address> <size>");

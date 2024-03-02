@@ -24,6 +24,7 @@ signals:
     void ConnectSignal(QString portName);
     void EraseSignal(uint32_t address, uint16_t size);
     void ReadSignal(uint32_t address, uint16_t size);
+    void GetConfigSignal();
 
 private slots:
     void on_browseBtn_clicked();

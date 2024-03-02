@@ -1,6 +1,9 @@
 #include "boot.h"
 #include "com.h"
 
+/* Pointer to boot configuration */
+Boot_ConfigTypeDef *p_cfg;
+
 /* State machine definitions */
 typedef enum {
     INIT,
@@ -46,26 +49,36 @@ void Init(void) {
     // Initialize communication interface
     ComInit();
 
-    // Check validity of boot_config
-    Boot_ConfigTypeDef *p_cfg = (Boot_ConfigTypeDef *)BL_CONFIG_ADDR;
-    uint32_t calculated_crc = crc32((uint8_t *)p_cfg, 
-                                    sizeof(Boot_ConfigTypeDef),
-                                    INITIAL_CRC);
+    // TODO: Initialize persistent configuration
+    // Caclulate configuration address as closest page boundary below BL_APP_START_ADDRESS
+    uint32_t config_addr = FlashUtil_RoundDownToPage(BL_APP_START_ADDRESS - sizeof(Boot_ConfigTypeDef));
 
-    // If boot_config is invalid, store default boot_config in Flash
+    // Check validity of boot_config
+    // Exclude first 4 bytes (CRC32) from calculation
+    p_cfg = (Boot_ConfigTypeDef *)config_addr;
+    uint32_t calculated_crc = crc32((uint8_t *)p_cfg + 4,
+                                    sizeof(Boot_ConfigTypeDef) - 4,
+                                    INITIAL_CRC);
     if (calculated_crc != p_cfg->crc32) {
         // Store default boot_config in Flash
         // slot_configs are all initialized to 0
         Boot_ConfigTypeDef default_cfg = {0};
-        default_cfg.crc32 = crc32((uint8_t *)&default_cfg, 
-                                 sizeof(Boot_ConfigTypeDef),
-                                 INITIAL_CRC);
+        Version_TypeDef default_version = {BL_VERSION_MAJOR, BL_VERSION_MINOR};
+        default_cfg.version = default_version;
+        Slot_ConfigTypeDef default_slot = DEFAULT_SLOT_CONFIG;
+        default_cfg.slot_list[0] = default_slot;
+
+        // Calculate CRC32
+        default_cfg.crc32 = crc32((uint8_t *)&default_cfg + 4, 
+                                  sizeof(Boot_ConfigTypeDef) - 4,
+                                  INITIAL_CRC);
                                  
-        FlashErase(BL_CONFIG_ADDR, sizeof(Boot_ConfigTypeDef));
-        FlashWrite(BL_CONFIG_ADDR, &default_cfg, sizeof(Boot_ConfigTypeDef));
+        BootFlashErase(config_addr, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef)));
+        BootFlashWrite(config_addr, &default_cfg, sizeof(Boot_ConfigTypeDef));
     }
 }
 #else
+// If using emulator, don't load configuration
 void Init(void) {
     // Initialize communication interface
     ComInit();
@@ -170,8 +183,9 @@ void ChangeNodeId(void) {
 }
 
 void GetConfig(void) {
-    // TODO: Implement this
-    ComNack();
+    ComAck();
+    ComTransmit((uint8_t *)p_cfg, sizeof(Boot_ConfigTypeDef), 100);
+    ComAck();
 }
 
 void EraseMemory(void) {
