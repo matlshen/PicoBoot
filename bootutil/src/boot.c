@@ -9,7 +9,7 @@ typedef enum {
     VERIFY,
     HANDLE_TIMEOUT,
 } Boot_StateTypeDef;
-static Boot_StateTypeDef boot_state = WAITING_FOR_COMMAND;
+static Boot_StateTypeDef boot_state = INIT;
 static bool in_bootloader_mode = false;
 static Boot_StatusTypeDef status;
 
@@ -99,6 +99,10 @@ void WaitForCommand(void) {
     if (status == BOOT_OK) {
         // If command, handle command and go back to waiting for command
         switch (msg_id) {
+            case MSG_ID_CONN_REQ:
+                // TODO: Change this behavior
+                ComAck();
+                break;
             case MSG_ID_CHANGE_SPEED:
                 // TODO: Implement this
                 ChangeSpeed();

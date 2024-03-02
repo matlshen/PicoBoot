@@ -8,7 +8,7 @@ Boot_StatusTypeDef UARTInit(void) {
     _serial.setPortName("COM13");    // TODO: Make this configurable
     _serial.setBaudRate(QSerialPort::Baud115200);
     _serial.setDataBits(QSerialPort::Data8);
-    _serial.setParity(QSerialPort::EvenParity);
+    _serial.setParity(QSerialPort::NoParity);
     _serial.setStopBits(QSerialPort::OneStop);
     _serial.setFlowControl(QSerialPort::NoFlowControl);
 

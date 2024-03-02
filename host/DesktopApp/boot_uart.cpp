@@ -1,21 +1,22 @@
 #include "uart.h"
 #include <QSerialPort>
 #include <QDebug>
+#include "IoThread.h"
 
-QSerialPort _serial;
-
+// This function is only used for testing
+// In host app, the desktop app will handle opening the port
 Boot_StatusTypeDef UARTInit(void) {
-    _serial.setPortName("COM13");    // TODO: Make this configurable
-    _serial.setBaudRate(QSerialPort::Baud115200);
-    _serial.setDataBits(QSerialPort::Data8);
-    _serial.setParity(QSerialPort::EvenParity);
-    _serial.setStopBits(QSerialPort::OneStop);
-    _serial.setFlowControl(QSerialPort::NoFlowControl);
+    IoThread::_serial->setPortName("COM13");
+    IoThread::_serial->setBaudRate(QSerialPort::Baud115200);
+    IoThread::_serial->setDataBits(QSerialPort::Data8);
+    IoThread::_serial->setParity(QSerialPort::NoParity);
+    IoThread::_serial->setStopBits(QSerialPort::OneStop);
+    IoThread::_serial->setFlowControl(QSerialPort::NoFlowControl);
 
     // Set the read buffer size to 1 so that we can read one byte at a time
-    _serial.setReadBufferSize(1);
+    IoThread::_serial->setReadBufferSize(1);
 
-    if (_serial.open(QIODevice::ReadWrite)) {
+    if (IoThread::_serial->open(QIODevice::ReadWrite)) {
         return BOOT_OK;
     } else {
         return BOOT_ERROR;
@@ -23,7 +24,7 @@ Boot_StatusTypeDef UARTInit(void) {
 }
 
 Boot_StatusTypeDef UARTDeInit(void) {
-    _serial.close();
+    IoThread::_serial->close();
     return BOOT_OK;
 }
 
@@ -31,9 +32,9 @@ Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t t
     for (int i = 0; i < length; i++) {
 
         // Attempt to write the byte to the serial port
-        if (_serial.write((const char *)data+i, 1) == 1) {
+        if (IoThread::_serial->write((const char *)data+i, 1) == 1) {
             // Wait for the data to be written to the serial port
-            if (!_serial.waitForBytesWritten(timeout_ms)) {
+            if (!IoThread::_serial->waitForBytesWritten(timeout_ms)) {
                 // qDebug() << "UART Tx Timeout";
                 return BOOT_TIMEOUT;
             }
@@ -47,6 +48,8 @@ Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t t
         }
     }
 
+    IoThread::_serial->clear();
+
     return BOOT_OK;
 }
 
@@ -56,14 +59,14 @@ Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_
 
         // For the first byte, wait for the specified timeout period
         // For subsequent bytes, wait for the byte timeout period
-        if (_serial.waitForReadyRead(received == 0 ? timeout_ms : UART_BYTE_TIMEOUT_MS)) {
-            received += _serial.read((char *)data + i, 1);
+        if (IoThread::_serial->waitForReadyRead(received == 0 ? timeout_ms : UART_BYTE_TIMEOUT_MS)) {
+            received += IoThread::_serial->read((char *)data + i, 1);
         } else {
             // qDebug() << "UART Rx Timeout";
             return BOOT_TIMEOUT;
         }
 
-        // qDebug() << "UART Byte Received";
+        // qDebug() << "UART Byte Received" << Qt::hex << data[i];
     }
 
     return BOOT_OK;

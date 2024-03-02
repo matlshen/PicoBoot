@@ -8,7 +8,8 @@ void TestFunction(void) {
     ComInit();
 
     // Jump to app
-    JumpToApp(0x8006000);
+    //JumpToApp(0x8006000);
+
 
     while (1)
         BootStateMachine();
