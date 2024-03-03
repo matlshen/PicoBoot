@@ -86,10 +86,7 @@ Boot_StatusTypeDef FlashRead(uint32_t address, void *data, uint32_t size) {
         return BOOT_ADDRESS_ERROR;
     }
 
-    // Copy data from Flash
-    memcpy(data, (void *)address, size);
-
-    return BOOT_OK;
+    return BootFlashRead(address, data, size);
 }
 
 /**
@@ -137,6 +134,20 @@ Boot_StatusTypeDef BootFlashErase(uint32_t address, uint32_t size) {
 
     // Lock flash
     HAL_FLASH_Lock();
+
+    return BOOT_OK;
+}
+
+/**
+ * @brief Unrestricted read data from Flash memory.
+ * @param address Start address to read from. 
+ * @param data Buffer to read data into.
+ * @param size Number of bytes to read.
+ * @return BOOT_OK if successful, otherwise error code.
+*/
+Boot_StatusTypeDef BootFlashRead(uint32_t address, void *data, uint32_t size) {
+    // Copy data from Flash
+    memcpy(data, (void *)address, size);
 
     return BOOT_OK;
 }

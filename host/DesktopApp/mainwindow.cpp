@@ -20,6 +20,9 @@ MainWindow::~MainWindow()
 void MainWindow::UpdateLog(QString msg, const QBrush& color) {
     QTextCursor cursor = ui->logTextEdit->textCursor();
 
+    // Move cursor to end
+    cursor.movePosition(QTextCursor::End);
+
     // Set text color
     QTextCharFormat format;
     format.setForeground(color);
@@ -29,6 +32,7 @@ void MainWindow::UpdateLog(QString msg, const QBrush& color) {
     cursor.insertText("\n");
 
     // Scroll to bottom
+    cursor.movePosition(QTextCursor::End);
     ui->logTextEdit->ensureCursorVisible();
 }
 
@@ -77,8 +81,10 @@ void MainWindow::on_lineEdit_returnPressed()
     // If the command is empty, return
     if (tokens.isEmpty()) return;
 
+    if (tokens.at(0) == "clear")
+        ui->logTextEdit->clear();
     // If the command is "connect", call the connect button slot
-    if (tokens.at(0) == "connect") {
+    else if (tokens.at(0) == "connect") {
         on_connectBtn_clicked();
     }
     else if (tokens.at(0) == "getconfig") {
@@ -144,7 +150,7 @@ void MainWindow::on_lineEdit_returnPressed()
         int slot_num = tokens.at(1).right(1)[0].digitValue();
         emit VerifySignal(slot_num);
     }
-    else if (tokens.at(0) == "go")
+    else if (tokens.at(0) == "go" || tokens.at(0) == "run")
         emit GoSignal();
     else if (tokens.at(0) == "reset")
         emit ResetSignal();

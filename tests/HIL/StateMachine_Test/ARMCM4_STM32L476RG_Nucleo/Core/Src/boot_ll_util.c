@@ -1,4 +1,5 @@
 #include "ll_util.h"
+#include "com.h"
 
 #include "stm32l4xx.h"
 

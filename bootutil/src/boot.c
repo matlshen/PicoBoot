@@ -1,6 +1,21 @@
 #include "boot.h"
 #include "com.h"
 
+/* Function prototypes */
+static void Init(void);
+static void WaitForConnection(void);
+static void WaitForCommand(void);
+static void ChangeSpeed(void);
+static void ChangeNodeId(void);
+static void GetConfig(void);
+static void SetConfig(void);
+static void EraseMemory(void);
+static void WriteMemory(void);
+static void ReadMemory(void);
+static void Verify(void);
+static void Go(void);
+static void HandleTimeout(void);
+
 /* Pointer to boot configuration */
 Boot_ConfigTypeDef *p_cfg;
 
@@ -54,12 +69,8 @@ static void Init(void) {
     uint32_t config_addr = FlashUtil_RoundDownToPage(BL_APP_START_ADDRESS - sizeof(Boot_ConfigTypeDef));
 
     // Check validity of boot_config
-    // Exclude first 4 bytes (CRC32) from calculation
     p_cfg = (Boot_ConfigTypeDef *)config_addr;
-    uint32_t calculated_crc = crc32((uint8_t *)p_cfg + 4,
-                                    sizeof(Boot_ConfigTypeDef) - 4,
-                                    INITIAL_CRC);
-    if (calculated_crc != p_cfg->crc32) {
+    if (GetConfigCrc(p_cfg) != p_cfg->crc32) {
         // Store default boot_config in Flash
         // slot_configs are all initialized to 0
         Boot_ConfigTypeDef default_cfg = {0};
@@ -68,12 +79,10 @@ static void Init(void) {
         default_cfg.app_start_address = BL_APP_START_ADDRESS;
         Slot_ConfigTypeDef default_slot = DEFAULT_SLOT_CONFIG;
         default_cfg.slot_list[0] = default_slot;
+        default_cfg.node_id = TARGET;
 
         // Calculate CRC32
-        default_cfg.crc32 = crc32((uint8_t *)&default_cfg + 4, 
-                                  sizeof(Boot_ConfigTypeDef) - 4,
-                                  INITIAL_CRC);
-                                 
+        default_cfg.crc32 = GetConfigCrc(&default_cfg);                                 
         BootFlashErase(config_addr, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef)));
         BootFlashWrite(config_addr, &default_cfg, sizeof(Boot_ConfigTypeDef));
     }
@@ -294,7 +303,6 @@ void WriteMemory(void) {
                 ComNack();
                 return;
             } else {
-                // TODO: Verify that this is correct
                 if (FlashWrite(end_address - bytes_remaining - bytes_to_receive, data, bytes_to_receive) != BOOT_OK) {
                     ComNack();
                     return;
@@ -382,7 +390,7 @@ void Go(void) {
     ComAck();
     ComAck();
 
-    // Go to application
+    // Go to application in slot 0
     JumpToApp(p_cfg->slot_list[0].load_address);
 }
 
@@ -405,6 +413,11 @@ bool VerifySlot(uint8_t slot) {
         return true;
 }
 
+uint32_t GetConfigCrc(Boot_ConfigTypeDef* p_boot_config) {
+    // Exclude first 4 bytes (CRC32) from calculation
+    return crc32((uint8_t *)p_boot_config + 4, sizeof(Boot_ConfigTypeDef) - 4, INITIAL_CRC);
+}
+
 void HandleTimeout(void) {
     // If in bootloader mode, do nothing
     if (in_bootloader_mode) {
@@ -413,13 +426,9 @@ void HandleTimeout(void) {
     }
 
     // If not in bootloader mode, verify application
-    Verify();
-
-    // If application is valid, go to application
-    if (status == BOOT_OK)
+    if (VerifySlot(0))
         Go();
-    else {
-        // If application is invalid, enter bootloader mode
+    else
+        // If application is not valid, enter bootloader mode
         in_bootloader_mode = true;
-    }
 }

@@ -67,7 +67,8 @@ void IoThread::GetConfigSlot() {
         }
         emit SendLog("Retrieved target configuration", Qt::blue);
         emit SendLog("bootloader version: " + QString::number(target_config.version.major) + "." + QString::number(target_config.version.minor));
-        emit SendLog("Application section start: 0x" + QString::number(target_config.app_start_address, 16).toUpper());
+        emit SendLog("application load address: 0x" + QString::number(target_config.slot_list[0].load_address, 16).toUpper());
+        emit SendLog("application slot size: 0x" + QString::number(target_config.slot_list[0].slot_size, 16).toUpper());
     }
     else if (status == BOOT_TIMEOUT)
         emit SendLog("GetConfig operation timed out", Qt::red);

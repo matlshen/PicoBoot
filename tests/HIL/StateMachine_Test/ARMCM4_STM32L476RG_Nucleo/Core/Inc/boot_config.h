@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-#define TARGET
-// #define TARGET
+/* Platform information, node ID */
+#define TARGET 0U
+// #define HOST
 
 /* Bootloader information */
 #define BL_VERSION_MAJOR    0U

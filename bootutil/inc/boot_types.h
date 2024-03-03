@@ -76,6 +76,7 @@ typedef struct __attribute__((aligned(8))) {
     uint32_t app_start_address;     /* Application start address */
     uint32_t active_slot;           /* Active slot */
     Slot_ConfigTypeDef slot_list[BL_NUM_SLOTS]; /* Slot configurations */
+    uint16_t node_id;                /* Node ID */
 } Boot_ConfigTypeDef;
 
 #ifdef __cplusplus

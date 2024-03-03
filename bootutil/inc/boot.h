@@ -7,6 +7,7 @@
 #include "boot_config.h"
 #include "boot_types.h"
 #include "ll_util.h"
+#include "flash.h"
 #include "flash_util.h"
 #include "com.h"
 #include "crc32.h"
@@ -18,21 +19,9 @@ extern "C" {
 
 void BootStateMachine(void);
 
-static void Init(void);
-static void WaitForConnection(void);
-static void WaitForCommand(void);
-static void ChangeSpeed(void);
-static void ChangeNodeId(void);
-static void GetConfig(void);
-static void SetConfig(void);
-static void EraseMemory(void);
-static void WriteMemory(void);
-static void ReadMemory(void);
-static void Verify(void);
-static void Go(void);
-
 bool VerifySlot(uint8_t slot);
-static void HandleTimeout(void);
+uint32_t GetConfigCrc(Boot_ConfigTypeDef* p_boot_config);
+
 
 #ifdef __cplusplus
 }
