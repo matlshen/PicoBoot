@@ -22,7 +22,7 @@ public slots:
     void UpdateProgress(int progress);
 
 signals:
-    void ConnectSignal(QString portName);
+    void ConnectSignal(QString portName, int nodeId = -1);
     void GetConfigSignal();
     void EraseSignal(uint32_t address, uint16_t size);
     void ReadSignal(uint32_t address, uint16_t size);

@@ -3,9 +3,16 @@
 
 Boot_ConfigTypeDef target_config;
 
-Boot_StatusTypeDef ConnectToTarget(void) {
-    // Send empty connection request
-    ComTransmitPacket(MSG_ID_CONN_REQ, NULL, 0);
+Boot_StatusTypeDef ConnectToTarget(uint16_t node_id) {
+    // If node_id is 0xFFFF, do not include node_id in connection request
+    if (node_id == 0xFFFF) {
+        // Send empty connection request
+        ComTransmitPacket(MSG_ID_CONN_REQ, NULL, 0);
+    } else {
+        // Send connection request with node_id
+        uint8_t tx_data[2] = {(uint8_t)(node_id & 0xFF), (uint8_t)(node_id >> 8)};
+        ComTransmitPacket(MSG_ID_CONN_REQ, tx_data, 2);
+    }
 
     // Wait for ACK
     if (WaitForAck(BL_TIMEOUT_MS) != BOOT_OK)

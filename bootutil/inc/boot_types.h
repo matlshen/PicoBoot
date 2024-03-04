@@ -21,12 +21,14 @@ typedef enum {
 typedef enum {
     MSG_ID_CONN_REQ = 0x50U,
     MSG_ID_CHANGE_SPEED = 0x51U,
-    MSG_ID_CHANGE_NODE_ID = 0x52U,
-    MSG_ID_GET_CONFIG = 0x53U,
+    MSG_ID_GET_CONFIG = 0x52U,
+    MSG_ID_CONFIG_RESP = 0x53U,
     MSG_ID_SET_CONFIG = 0x54U,
-    MSG_ID_MEM_ERASE = 0x58U,
-    MSG_ID_MEM_WRITE = 0x59U,
-    MSG_ID_MEM_READ = 0x5AU,
+    MSG_ID_MEM_ERASE = 0x55U,
+    MSG_ID_MEM_READ = 0x56U,
+    MSG_ID_MEM_READ_RESP = 0x57U,
+    MSG_ID_MEM_WRITE = 0x58U,
+    MSG_ID_SWAP = 0x5AU,
     MSG_ID_VERIFY = 0x5BU,
     MSG_ID_GO = 0x5CU,
     MSG_ID_RESET = 0x5DU,
@@ -73,7 +75,7 @@ typedef struct {
 typedef struct __attribute__((aligned(8))) {
     uint32_t crc32;                 /* CRC32 of boot_config */
     Version_TypeDef version;         /* Bootloader version */
-    uint32_t app_start_address;     /* Application start address */
+    uint32_t app_start_address;     /* Application section start address */
     uint32_t active_slot;           /* Active slot */
     Slot_ConfigTypeDef slot_list[BL_NUM_SLOTS]; /* Slot configurations */
     uint16_t node_id;                /* Node ID */

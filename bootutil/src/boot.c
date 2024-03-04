@@ -5,8 +5,8 @@
 static void Init(void);
 static void WaitForConnection(void);
 static void WaitForCommand(void);
+static void CheckConnection(void);
 static void ChangeSpeed(void);
-static void ChangeNodeId(void);
 static void GetConfig(void);
 static void SetConfig(void);
 static void EraseMemory(void);
@@ -95,24 +95,29 @@ static void Init(void) {
 }
 #endif
 
+// Wait for connection from target. Stay quiet if no connection
 static void WaitForConnection(void) {
     // Wait for connection
-    status = ComReceivePacket(&msg_id, data, &length, BL_TIMEOUT_MS);
+    if (ComReceivePacket(&msg_id, data, &length, BL_TIMEOUT_MS) != BOOT_OK) {
+        return;
+    }
 
-    // If connection request, ack and go to waiting for command
-    if (status == BOOT_OK && msg_id == MSG_ID_CONN_REQ) {
-        // TODO: Implement node id check
+    if (msg_id != MSG_ID_CONN_REQ)
+        return;
+
+    // If empty packet, connect
+    if (length == 0) {
         ComAck();
         boot_state = WAITING_FOR_COMMAND;
     }
 
-    // If host timed out
-    else if (status == BOOT_TIMEOUT)
-        boot_state = HANDLE_TIMEOUT;
-
-    // If other problem, nack and continue waiting for connection
-    else
-        ComNack();
+    // If node ID is specified, check if it matches
+    else if (length == 2) {
+        if (data[0] == p_cfg->node_id) {
+            ComAck();
+            boot_state = WAITING_FOR_COMMAND;
+        }
+    }
 }
 
 static void WaitForCommand(void) {
@@ -123,16 +128,12 @@ static void WaitForCommand(void) {
         // If command, handle command and go back to waiting for command
         switch (msg_id) {
             case MSG_ID_CONN_REQ:
-                // TODO: Change this behavior (add node ID logic)
+                CheckConnection();
                 ComAck();
                 break;
             case MSG_ID_CHANGE_SPEED:
                 // TODO: Implement this
                 ChangeSpeed();
-                break;
-            case MSG_ID_CHANGE_NODE_ID:
-                // TODO: Implement this
-                ChangeNodeId();
                 break;
             case MSG_ID_GET_CONFIG:
                 GetConfig();
@@ -177,19 +178,27 @@ static void WaitForCommand(void) {
         ComNack();
 }
 
+void CheckConnection(void) {
+    // If length of received packet is 0, ACK and return
+    if (length == 0) {
+        ComAck();
+        return;
+    }
+
+    // If new node ID still matches, send ACK
+    if (length == 2 && ToU16(&data[0]) == p_cfg->node_id) {
+        ComAck();
+        return;
+    }
+
+    // Otherwise, silently disconnect
+    boot_state = WAITING_FOR_CONNECTION;
+}
+
 void ChangeSpeed(void) {
     // TODO: Implement this
     Boot_MsgIdTypeDef tx_msg_id = MSG_ID_CHANGE_SPEED;
     uint8_t tx_data[] = {0x92, 0x82, 0x71, 0x69};
-    uint8_t tx_length = 4;
-    ComTransmitPacket(tx_msg_id, tx_data, tx_length);
-    ComNack();
-} 
-
-void ChangeNodeId(void) {
-    // TODO: Implement this
-    Boot_MsgIdTypeDef tx_msg_id = MSG_ID_CHANGE_NODE_ID;
-    uint8_t tx_data[] = {0x11, 0x12, 0x13, 0x14};
     uint8_t tx_length = 4;
     ComTransmitPacket(tx_msg_id, tx_data, tx_length);
     ComNack();

@@ -9,7 +9,7 @@ extern "C" {
 
 extern Boot_ConfigTypeDef target_config;
 
-Boot_StatusTypeDef ConnectToTarget(void);
+Boot_StatusTypeDef ConnectToTarget(uint16_t node_id);
 Boot_StatusTypeDef GetTargetConfig();
 Boot_StatusTypeDef SetTargetConfig();
 Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size);

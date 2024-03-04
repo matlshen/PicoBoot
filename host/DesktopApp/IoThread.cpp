@@ -16,7 +16,7 @@ void IoThread::work() {
     // }
 }
 
-void IoThread::ConnectSlot(QString portName) {
+void IoThread::ConnectSlot(QString portName, int nodeId) {
     qDebug("Opening port %s", portName.toStdString().c_str());
 
     // Close serial port if it is already open
@@ -43,7 +43,13 @@ void IoThread::ConnectSlot(QString portName) {
     }
 
     // Connect to target
-    Boot_StatusTypeDef status = ConnectToTarget();
+    Boot_StatusTypeDef status;
+    if (nodeId == -1)
+        status = ConnectToTarget(0xFFFF);
+    else
+        status = ConnectToTarget(static_cast<uint16_t>(nodeId));
+
+    // Check connection status
     if (status == BOOT_OK)
         emit SendLog("Connected to target", Qt::blue);
     else if (status == BOOT_TIMEOUT)

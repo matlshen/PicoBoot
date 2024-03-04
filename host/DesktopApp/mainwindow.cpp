@@ -63,7 +63,17 @@ void MainWindow::LoadPorts() {
 void MainWindow::on_connectBtn_clicked()
 {
     QString portName = ui->portComboBox->currentText();
-    emit ConnectSignal(portName);
+    if (ui->nodeIdLineEdit->text().isEmpty())
+        emit ConnectSignal(portName);
+    else {
+        bool status;
+        int nodeId = ui->nodeIdLineEdit->text().toInt(&status, 16);
+        if (!status) {
+            UpdateLog("Invalid node ID", Qt::red);
+            return;
+        }
+        emit ConnectSignal(portName, nodeId);
+    }
 }
 
 

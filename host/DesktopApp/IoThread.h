@@ -13,7 +13,7 @@ public:
     explicit IoThread(QObject *parent = nullptr);
 public slots:
     void work();
-    void ConnectSlot(QString portName);
+    void ConnectSlot(QString portName, int nodeId = -1);
     void GetConfigSlot();
     void EraseSlot(uint32_t address, uint16_t size);
     void ReadSlot(uint32_t address, uint16_t size);
