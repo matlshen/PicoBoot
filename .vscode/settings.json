@@ -62,6 +62,7 @@
         "stm32l4xx.h": "c",
         "boot_config.h": "c",
         "stm32l4xx_hal.h": "c",
-        "stm32l4xx_hal_conf.h": "c"
+        "stm32l4xx_hal_conf.h": "c",
+        "usb_device.h": "c"
     }
 }

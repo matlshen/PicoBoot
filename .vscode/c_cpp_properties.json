@@ -1,14 +1,14 @@
 {
     "env": {
         "gccExePath": "C:\\msys64\\mingw64\\bin\\arm-none-eabi-gcc.exe",
-        "project_name": "ARMCM4_STM32L476RG_Nucleo",
+        "project_name": "host/CANTranslator/ARMCM4_STM32L496RG_Testboard",
         "MCU_FAMILY": "STM32L4xx",
         "MCU_MODEL": "STM32L476xx",
         "gccArgs": [
             "-mcpu=cortex-m0",
-            "-mthumb"
-            //"-mfloat-abi=hard",
-            //"-mfpu=fpv4-sp-d16"
+            "-mthumb",
+            "-mfloat-abi=hard",
+            "-mfpu=fpv4-sp-d16"
         ]
     },
     "configurations": [
@@ -32,7 +32,11 @@
             "name": "STM32",
             "intelliSenseMode": "gcc-arm",
             "includePath": [
-                "tests/HIL/StateMachine_Test/${env:project_name}/Core/Inc",
+                "${env:project_name}/Core/Inc",
+                "${env:project_name}/USB_DEVICE/App",
+                "${env:project_name}/USB_DEVICE/Target",
+                "${env:project_name}/STM32_USB_Device_Library/Class/CDC/Inc",
+                "${env:project_name}/STM32_USB_Device_Library/Core/Inc",
                 "common/CMSIS/Device/ST/${env:MCU_FAMILY}/Include",
                 "common/CMSIS/Include",
                 "common/${env:MCU_FAMILY}_HAL_Driver/Inc",
@@ -41,7 +45,12 @@
             ],
             "browse": {
                 "path": [
-                    "tests/HIL/StateMachine_Test/${env:project_name}/Core/Src",
+                    "${env:project_name}/Core/Src",
+                    "${env:project_name}/Core/Inc",
+                    "${env:project_name}/USB_DEVICE/App",
+                    "${env:project_name}/USB_DEVICE/Target",
+                    "${env:project_name}/STM32_USB_Device_Library/Class/CDC/Src",
+                    "${env:project_name}/STM32_USB_Device_Library/Core/Src",
                     "common/${env:MCU_FAMILY}_HAL_Driver/Src"
                 ],
                 "limitSymbolsToIncludedHeaders": true
@@ -53,43 +62,7 @@
             ],
             "compilerPath": "${env:gccExePath}",
             "cStandard": "c11"
-        },
-        {
-            "name": "Windows Host",
-            "intelliSenseMode": "windows-gcc-x64",
-            "includePath": [
-                "host/Core/Inc",
-                "bootutil/inc"
-            ],
-            "defines": [],
-            "compilerPath": "C:\\msys64\\mingw64\\bin\\g++.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++17"
-        },
-        {
-            "name": "Testing",
-            "intelliSenseMode": "gcc-arm",
-            "includePath": [
-                "boot/${env:project_name}/Core/Inc",
-                "bootutil/inc",
-                "tests",
-                "tests/stubs"
-            ],
-            "browse": {
-                "path": [
-                    "boot/${env:project_name}/Core/Src",
-                    "common/${env:MCU_FAMILY}_HAL_Driver/Src"
-                ],
-                "limitSymbolsToIncludedHeaders": true
-            },
-            "defines": [
-                "${env:MCU_MODEL}",
-                "USE_HAL_DRIVER",
-                "USE_FULL_LL_DRIVER"
-            ],
-            "compilerPath": "${env:gccExePath}",
-            "cStandard": "c11"
-        },
+        }
     ],
     "version": 4
 }
