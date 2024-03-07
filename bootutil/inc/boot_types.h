@@ -28,13 +28,27 @@ typedef enum {
     MSG_ID_MEM_READ = 0x56U,
     MSG_ID_MEM_READ_RESP = 0x57U,
     MSG_ID_MEM_WRITE = 0x58U,
-    MSG_ID_SWAP = 0x5AU,
-    MSG_ID_VERIFY = 0x5BU,
-    MSG_ID_GO = 0x5CU,
-    MSG_ID_RESET = 0x5DU,
-    MSG_ID_ACK = 0x5EU,
-    MSG_ID_NACK = 0x5FU,
+    MSG_ID_SWAP = 0x59U,
+    MSG_ID_VERIFY = 0x5AU,
+    MSG_ID_GO = 0x5BU,
+    MSG_ID_RESET = 0x5CU,
+    MSG_ID_ACK = 0x5DU,
+    MSG_ID_NACK = 0x5EU,
+    MSG_ID_DATA_HTT = 0x5FU,
+    MSG_ID_DATA_TTH = 0x60U,
 } Boot_MsgIdTypeDef;
+
+typedef struct {
+    Boot_MsgIdTypeDef msg_id;
+    uint8_t data[8];
+    uint16_t length;
+} Boot_CmdPacketTypeDef;
+
+typedef struct {
+    Boot_MsgIdTypeDef msg_id;
+    uint8_t data[256];
+    uint16_t length;
+} Boot_DataPacketTypeDef;
 
 typedef struct {
     uint8_t major;

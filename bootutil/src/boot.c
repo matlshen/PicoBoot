@@ -5,14 +5,14 @@
 static void Init(void);
 static void WaitForConnection(void);
 static void WaitForCommand(void);
-static void CheckConnection(void);
-static void ChangeSpeed(void);
+static void CheckConnection(Boot_CmdPacketTypeDef *cmd_packet);
+static void ChangeSpeed(Boot_CmdPacketTypeDef *cmd_packet);
 static void GetConfig(void);
-static void SetConfig(void);
-static void EraseMemory(void);
-static void WriteMemory(void);
-static void ReadMemory(void);
-static void Verify(void);
+static void SetConfig(Boot_CmdPacketTypeDef *cmd_packet);
+static void EraseMemory(Boot_CmdPacketTypeDef *cmd_packet);
+static void WriteMemory(Boot_CmdPacketTypeDef *cmd_packet);
+static void ReadMemory(Boot_CmdPacketTypeDef *cmd_packet);
+static void Verify(Boot_CmdPacketTypeDef *cmd_packet);
 static void Go(void);
 static void HandleTimeout(void);
 
@@ -53,11 +53,6 @@ void BootStateMachine(void) {
     }
 }
 
-/* Packet buffer */
-static Boot_MsgIdTypeDef msg_id;
-static uint8_t data[256];
-static uint8_t length;
-
 // Ignore this if running emulator
 #ifdef TARGET
 static void Init(void) {
@@ -97,23 +92,25 @@ static void Init(void) {
 
 // Wait for connection from target. Stay quiet if no connection
 static void WaitForConnection(void) {
+    Boot_CmdPacketTypeDef cmd_packet;
+
     // Wait for connection
-    if (ComReceivePacket(&msg_id, data, &length, BL_TIMEOUT_MS) != BOOT_OK) {
+    if (ComReceivePacket(&cmd_packet.msg_id, cmd_packet.data, &cmd_packet.length, BL_TIMEOUT_MS) != BOOT_OK) {
         return;
     }
 
-    if (msg_id != MSG_ID_CONN_REQ)
+    if (cmd_packet.msg_id != MSG_ID_CONN_REQ)
         return;
 
     // If empty packet, connect
-    if (length == 0) {
+    if (cmd_packet.length == 0) {
         ComAck();
         boot_state = WAITING_FOR_COMMAND;
     }
 
     // If node ID is specified, check if it matches
-    else if (length == 2) {
-        if (data[0] == p_cfg->node_id) {
+    else if (cmd_packet.length == 2) {
+        if (ToU16(&cmd_packet.data[0]) == p_cfg->node_id) {
             ComAck();
             boot_state = WAITING_FOR_COMMAND;
         }
@@ -122,36 +119,37 @@ static void WaitForConnection(void) {
 
 static void WaitForCommand(void) {
     // Wait for command
-    status = ComReceivePacket(&msg_id, data, &length, BL_COMMAND_TIMEOUT_MS);
+    Boot_CmdPacketTypeDef cmd_packet;
+    Boot_StatusTypeDef status = ComReceivePacket(&cmd_packet.msg_id, cmd_packet.data, &cmd_packet.length, BL_TIMEOUT_MS);
 
     if (status == BOOT_OK) {
         // If command, handle command and go back to waiting for command
-        switch (msg_id) {
+        switch (cmd_packet.msg_id) {
             case MSG_ID_CONN_REQ:
-                CheckConnection();
+                CheckConnection(&cmd_packet);
                 ComAck();
                 break;
             case MSG_ID_CHANGE_SPEED:
                 // TODO: Implement this
-                ChangeSpeed();
+                ChangeSpeed(&cmd_packet);
                 break;
             case MSG_ID_GET_CONFIG:
                 GetConfig();
                 break;
             case MSG_ID_SET_CONFIG:
-                SetConfig();
+                SetConfig(&cmd_packet);
                 break;
             case MSG_ID_MEM_ERASE:
-                EraseMemory();
+                EraseMemory(&cmd_packet);
                 break;
             case MSG_ID_MEM_WRITE:
-                WriteMemory();
+                WriteMemory(&cmd_packet);
                 break;
             case MSG_ID_MEM_READ:
-                ReadMemory();
+                ReadMemory(&cmd_packet);
                 break;
             case MSG_ID_VERIFY:
-                Verify();
+                Verify(&cmd_packet);
                 break;
             case MSG_ID_GO:
                 Go();
@@ -178,15 +176,15 @@ static void WaitForCommand(void) {
         ComNack();
 }
 
-void CheckConnection(void) {
+void CheckConnection(Boot_CmdPacketTypeDef *cmd_packet) {
     // If length of received packet is 0, ACK and return
-    if (length == 0) {
+    if (cmd_packet->length == 0) {
         ComAck();
         return;
     }
 
     // If new node ID still matches, send ACK
-    if (length == 2 && ToU16(&data[0]) == p_cfg->node_id) {
+    if (cmd_packet->length == 2 && ToU16(&cmd_packet->data[0]) == p_cfg->node_id) {
         ComAck();
         return;
     }
@@ -195,7 +193,7 @@ void CheckConnection(void) {
     boot_state = WAITING_FOR_CONNECTION;
 }
 
-void ChangeSpeed(void) {
+void ChangeSpeed(Boot_CmdPacketTypeDef *cmd_packet) {
     // TODO: Implement this
     Boot_MsgIdTypeDef tx_msg_id = MSG_ID_CHANGE_SPEED;
     uint8_t tx_data[] = {0x92, 0x82, 0x71, 0x69};
@@ -205,14 +203,12 @@ void ChangeSpeed(void) {
 }
 
 void GetConfig(void) {
-    ComAck();
-    ComTransmit((uint8_t *)p_cfg, sizeof(Boot_ConfigTypeDef), 100);
-    ComAck();
+    ComTransmitPacket(MSG_ID_DATA_TTH, (uint8_t *)p_cfg, sizeof(Boot_ConfigTypeDef));
 }
 
-void SetConfig(void) {
-    // If length of received packet is not 4, send nack and return
-    if (length != 0) {
+void SetConfig(Boot_CmdPacketTypeDef *cmd_packet) {
+    // If length of received packet is not 0, send nack and return
+    if (cmd_packet->length != 0) {
         ComNack();
         return;
     } 
@@ -220,8 +216,16 @@ void SetConfig(void) {
         ComAck();
 
     // Receive new configuration
+    Boot_MsgIdTypeDef data_msg_id;
     Boot_ConfigTypeDef new_config;
-    if (ComReceive((uint8_t *)&new_config, sizeof(Boot_ConfigTypeDef), 100) != BOOT_OK) {
+    uint16_t data_length;
+    if (ComReceivePacket(&data_msg_id, (uint8_t*)&new_config, &data_length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK) {
+        ComNack();
+        return;
+    }
+
+    // Ensure data packet length matches size of Boot_ConfigTypeDef
+    if (data_length != sizeof(Boot_ConfigTypeDef)) {
         ComNack();
         return;
     }
@@ -232,6 +236,7 @@ void SetConfig(void) {
         ComNack();
         return;
     }
+
     // Write new configuration to flash
     if (BootFlashErase((uint32_t)p_cfg, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef))) != BOOT_OK) {
         ComNack();
@@ -246,15 +251,15 @@ void SetConfig(void) {
     ComAck();
 }
 
-void EraseMemory(void) {
+void EraseMemory(Boot_CmdPacketTypeDef *cmd_packet) {
     // If length of received packet is not 6, send nack and return
-    if (length != 6) {
+    if (cmd_packet->length != 6) {
         ComNack();
         return;
     }
 
     // If erase operation was not successful, send nack
-    if (FlashErase(ToU32(&data[0]), ToU16(&data[4])) != BOOT_OK) {
+    if (FlashErase(ToU32(&cmd_packet->data[0]), ToU16(&cmd_packet->data[4])) != BOOT_OK) {
         ComNack();
         return;
     }
@@ -263,78 +268,60 @@ void EraseMemory(void) {
     ComAck();
 }
 
-void WriteMemory(void) {
+void WriteMemory(Boot_CmdPacketTypeDef *cmd_packet) {
     // If length of received packet is not 6, send nack and return
-    if (length != 6) {
+    if (cmd_packet->length != 6) {
         ComNack();
         return;
     }
 
-    uint32_t start_address = ToU32(&data[0]);
-    uint16_t bytes_remaining = ToU16(&data[4]);
-    uint32_t end_address = ToU32(&data[0]) + bytes_remaining;
+    uint32_t start_address = ToU32(&cmd_packet->data[0]);
+    int32_t bytes_remaining = ToU16(&cmd_packet->data[4]);
+    uint32_t end_address = ToU32(&cmd_packet->data[0]) + bytes_remaining;
 
     // If write range is not valid, send nack and return
     // Otherwise, send ack to signal ready to receive write data
-    if (!FlashWriteRangeValid(start_address, bytes_remaining)) {
+    if (!FlashWriteRangeValid(start_address, (uint32_t)bytes_remaining)) {
         ComNack();
         return;
     } else {
         ComAck();
     }
 
-    // Receive write data in 256 byte chunks
     while (bytes_remaining > 0) {
-        uint16_t bytes_to_receive = (bytes_remaining > 256) ? 256 : bytes_remaining;
-
-        // Receive chunk data
-        if (ComReceive(data, bytes_to_receive, 100) != BOOT_OK) {
+        // Receive data packet
+        Boot_DataPacketTypeDef data_packet;
+        if (ComReceivePacket(&data_packet.msg_id, data_packet.data, &data_packet.length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK) {
             ComNack();
             return;
         }
 
-        bytes_remaining -= bytes_to_receive;
-
-        // If 256 bytes have been received or this is last chunk,
-        // receive the checksum and verify
-        if (bytes_to_receive == 256 || bytes_remaining == 0) {
-            uint32_t received_checksum;
-            if (ComReceive((uint8_t*)&received_checksum, 4, 100) != BOOT_OK) {
-                ComNack();
-                return;
-            }
-
-            uint32_t calculated_checksum = crc32(data, bytes_to_receive, INITIAL_CRC);
-
-            // If checksums do not match, send nack
-            // Otherwise, write to flash and send ack
-            if (received_checksum != calculated_checksum) {
-                ComNack();
-                return;
-            } else {
-                if (FlashWrite(end_address - bytes_remaining - bytes_to_receive, data, bytes_to_receive) != BOOT_OK) {
-                    ComNack();
-                    return;
-                }
-                ComAck();
-            }
+        // Check for too many bytes received
+        bytes_remaining -= data_packet.length;
+        if (bytes_remaining < 0) {
+            ComNack();
+            return;
         }
-    }
 
-    // Send ack if write operation was successful
-    ComAck();
+        // Write data to flash, ack if successful, nack if not
+        if (FlashWrite(end_address - bytes_remaining - data_packet.length, data_packet.data, data_packet.length) != BOOT_OK) {
+            ComNack();
+            return;
+        } else
+            ComAck();
+    }
 }
 
-void ReadMemory(void) {
+void ReadMemory(Boot_CmdPacketTypeDef *cmd_packet) {
     // If length of message is not 6, send nack
-    if (length != 6) {
+    if (cmd_packet->length != 6) {
         ComNack();
         return;
     }
 
-    uint32_t start_address = ToU32(&data[0]);
-    uint16_t bytes_remaining = ToU16(&data[4]);
-    uint32_t end_address = ToU32(&data[0]) + bytes_remaining;
+    uint32_t start_address = ToU32(&cmd_packet->data[0]);
+    uint16_t bytes_remaining = ToU16(&cmd_packet->data[4]);
+    uint32_t end_address = ToU32(&cmd_packet->data[0]) + bytes_remaining;
 
     // If read range is not valid, send nack and return
     // Otherwise, send ack to signal start of read data
@@ -349,7 +336,9 @@ void ReadMemory(void) {
     while (bytes_remaining > 0) {
         uint16_t current_read_size = (bytes_remaining > 256) ? 256 : bytes_remaining;
 
-        if (FlashRead(end_address - bytes_remaining, data, current_read_size) != BOOT_OK) {
+        Boot_DataPacketTypeDef data_packet;
+
+        if (FlashRead(end_address - bytes_remaining, data_packet.data, current_read_size) != BOOT_OK) {
             ComNack();
             return;
         }
@@ -358,29 +347,32 @@ void ReadMemory(void) {
         bytes_remaining -= current_read_size;
 
         // Transmit the current chunk
-        if (ComTransmit(data, current_read_size, 100) != BOOT_OK) {
+        if (ComTransmitPacket(MSG_ID_MEM_READ_RESP, data_packet.data, current_read_size) != BOOT_OK) {
+            ComNack();
+            return;
+        }
+
+        // Wait for ACK
+        if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK) {
             ComNack();
             return;
         }
     }
-
-    // Send ack to signal end of read data
-    ComAck();
 }
 
-static void Verify(void) {
-    if (length != 1) {
+static void Verify(Boot_CmdPacketTypeDef *cmd_packet) {
+    if (cmd_packet->length != 1) {
         ComNack();
         return;
     }
     
-    if (data[0] > BL_NUM_SLOTS) {
+    if (cmd_packet->data[0] > BL_NUM_SLOTS) {
         ComNack();
         return;
     }
 
     // Verify application hash in slot specified
-    if (!VerifySlot(data[0])) {
+    if (!VerifySlot(cmd_packet->data[0])) {
         ComNack();
         return;
     }
@@ -405,8 +397,8 @@ void Go(void) {
 
 bool VerifySlot(uint8_t slot) {
     // Verify application in slot specified
-    uint32_t start_addr = p_cfg->slot_list[data[0]].load_address;
-    uint32_t size = p_cfg->slot_list[data[0]].image_size;
+    uint32_t start_addr = p_cfg->slot_list[slot].load_address;
+    uint32_t size = p_cfg->slot_list[slot].image_size;
 
     // Compute sha256 hash of application
     uint8_t computed_hash[SHA256_BLOCK_SIZE];
@@ -416,7 +408,7 @@ bool VerifySlot(uint8_t slot) {
     sha256_final(&ctx, computed_hash);
 
     // Compare computed hash with stored hash
-    if (memcmp(computed_hash, p_cfg->slot_list[data[0]].hash, SHA256_BLOCK_SIZE) != 0)
+    if (memcmp(computed_hash, p_cfg->slot_list[slot].hash, SHA256_BLOCK_SIZE) != 0)
         return false;
     else
         return true;

@@ -11,7 +11,6 @@
 Boot_StatusTypeDef UARTInit(void) {
     LL_USART_InitTypeDef USART_InitStruct = {0};
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
     // Enable peripheral clocks
     // TODO: Make this configurable somehow
@@ -45,7 +44,18 @@ Boot_StatusTypeDef UARTInit(void) {
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_ms) {
+Boot_StatusTypeDef UARTDeInit(void) {
+    // Disable UART
+    LL_USART_Disable(UARTx);
+
+    // Disable peripheral clocks
+    LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_USART2);
+    LL_AHB2_GRP1_DisableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
+
+    return BOOT_OK;
+}
+
+Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     // Enable receive
     LL_USART_EnableDirectionRx(UARTx);
 
@@ -74,10 +84,21 @@ Boot_StatusTypeDef UARTReceive(uint8_t *data, uint8_t length, uint32_t timeout_m
     return BOOT_OK;
 }
 
-Boot_StatusTypeDef UARTTransmit(uint8_t *data, uint8_t length) {
+Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms) {
+    // first_byte is used to determine if we should wait for the full timeout period
+    bool first_byte = true;
+
     while (length--) {
-        // Wait for transmit buffer to be empty
+        uint32_t start_time = HAL_GetTick();
+
+        // Wait for byte to be sent
+        // For first byte, wait for timeout period
+        // For subsequent bytes, wait for shorter byte timeout period
         while (!LL_USART_IsActiveFlag_TXE(UARTx))
+            if ((HAL_GetTick() - start_time) > (first_byte ? timeout_ms : UART_BYTE_TIMEOUT_MS))
+                return first_byte ? BOOT_TIMEOUT : BOOT_FORMAT_ERROR;
+
+        first_byte = false;
 
         // Transmit data
         LL_USART_TransmitData8(UARTx, *data++);

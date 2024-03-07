@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
-#define UART_BYTE_TIMEOUT_MS 100
+#define CAN_BYTE_TIMEOUT_MS 100
+#define CAN_ID(msg_id) ((uint16_t)msg_id + 0x700)
+#define CAN_MSG_ID(can_id) (Boot_MsgIdTypeDef)(can_id - 0x700)
 
 Boot_StatusTypeDef CANInit(void);
 Boot_StatusTypeDef CANDeInit(void);

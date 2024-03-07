@@ -42,8 +42,6 @@ extern "C" {
     #define UART_RX_PIN_PA3
     #define UART_TX_PIN_PA2
     #define UART_BAUDRATE   115200
-// #define USE_PC_SERIAL
-//     #define PC_SERIAL_BAUDRATE 115200
 
 
 #ifdef __cplusplus

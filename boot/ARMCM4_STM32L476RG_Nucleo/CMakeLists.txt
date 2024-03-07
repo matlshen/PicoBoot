@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
+
 ########################################################################
 # Toolchain file must go at the top
 ########################################################################
@@ -27,7 +28,6 @@ set(BOOTUTIL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../bootutil)
 ########################################################################
 include_directories(
     Core/Inc
-    ${BOOTUTIL_DIR}/inc
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Inc
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Inc/Legacy
     ${COMMON_DIR}/CMSIS/Device/ST/${MCU_FAMILY}/Include
@@ -40,13 +40,9 @@ include_directories(
 file(GLOB PROJECT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.s
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c
-    ${BOOTUTIL_DIR}/src/*.c
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/*.c
 )
-list(REMOVE_ITEM PROJECT_SOURCES ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/${MCU_FAMILY_LOWER}_hal_msp_template.c)
-list(REMOVE_ITEM PROJECT_SOURCES ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/${MCU_FAMILY_LOWER}_hal_timebase_tim_template.c)
-list(REMOVE_ITEM PROJECT_SOURCES ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/${MCU_FAMILY_LOWER}_hal_timebase_rtc_wakeup_template.c)
-list(REMOVE_ITEM PROJECT_SOURCES ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/${MCU_FAMILY_LOWER}_hal_timebase_rtc_alarm_template.c)
+list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*template.*")
 
 # ASM source files
 set(ASM_SOURCES
@@ -56,12 +52,20 @@ set(ASM_SOURCES
 ########################################################################
 # Executable build instructions
 ########################################################################
+# Project name is the name of the source directory
 get_filename_component(SOURCE_DIR_NAME ${CMAKE_SOURCE_DIR} NAME)
 project(${SOURCE_DIR_NAME})
 
+# Add bootutil library
+add_subdirectory(../../bootutil ${CMAKE_CURRENT_BINARY_DIR}/bootutil)
+
 # Add executable
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${ASM_SOURCES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    ${MCU_MODEL}
+    USE_HAL_DRIVER
+    USE_FULL_LL_DRIVER)
+target_compile_definitions(bootlib PUBLIC
     ${MCU_MODEL}
     USE_HAL_DRIVER
     USE_FULL_LL_DRIVER)
@@ -77,7 +81,7 @@ set(CMAKE_EXE_LINKER_FLAGS
     -Wl,-Map=${PROJECT_NAME}.map,--cref \
     -Wl,--print-memory-usage"
 )
-target_link_libraries(${PROJECT_NAME} c m nosys)
+target_link_libraries(${PROJECT_NAME} c m nosys bootlib)
 
 # Post-build commands for generating binary and hex files
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

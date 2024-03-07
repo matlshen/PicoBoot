@@ -25,17 +25,17 @@ Boot_StatusTypeDef GetTargetConfig() {
     // Send get config request
     ComTransmitPacket(MSG_ID_GET_CONFIG, NULL, 0);
 
-    // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
-        return BOOT_ERROR;
-
     // Receive config
-    if (ComReceive((uint8_t *)&target_config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    Boot_DataPacketTypeDef data_packet;
+    if (ComReceivePacket(&data_packet.msg_id, data_packet.data, &data_packet.length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
-    // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    // Check if received message is a config response
+    if (data_packet.msg_id != MSG_ID_DATA_TTH || data_packet.length != sizeof(Boot_ConfigTypeDef))
         return BOOT_ERROR;
+
+    // Copy received config to target_config
+    memcpy(&target_config, data_packet.data, sizeof(Boot_ConfigTypeDef));
 
     // Check CRC on target config
     if (crc32((uint8_t *)&target_config+4, sizeof(Boot_ConfigTypeDef)-4, INITIAL_CRC) != target_config.crc32)
@@ -53,7 +53,7 @@ Boot_StatusTypeDef SetTargetConfig() {
         return BOOT_ERROR;
 
     // Send config
-    if (ComTransmit((uint8_t *)&target_config, sizeof(Boot_ConfigTypeDef), BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComTransmitPacket(MSG_ID_DATA_HTT, (const uint8_t*)&target_config, sizeof(Boot_ConfigTypeDef)) != BOOT_OK)
         return BOOT_ERROR;
 
     // Wait for ACK
@@ -87,20 +87,27 @@ Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *da
         return BOOT_ERROR;
 
     // Receive data in 256 byte chunks
-    while (size > 0) {
-        uint16_t chunk_size = (size > 256) ? 256 : size;
-
-        // Receive chunk
-        if (ComReceive(data, chunk_size, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    int isize = size;
+    while (isize > 0) {
+        Boot_MsgIdTypeDef data_msg_id;
+        uint16_t data_length;
+        if (ComReceivePacket(&data_msg_id, data, &data_length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
             return BOOT_ERROR;
 
-        data += chunk_size;
-        size -= chunk_size;
-    }
+        if (data_msg_id != MSG_ID_DATA_TTH)
+            return BOOT_ERROR;
 
-    // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
-        return BOOT_ERROR;
+        data += data_length;
+        isize -= data_length;
+
+        // If underflow, return error
+        if (isize < 0)
+            return BOOT_ERROR;
+
+        // Send ACK if more data is expected
+        if (isize > 0 )
+            ComAck();
+    }
 
     return BOOT_OK;
 }
@@ -117,22 +124,13 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
 
     // Send write data in 256 byte chunks
     while (size > 0) {
-        uint16_t chunk_size = (size > 256) ? 256 : size;
-
-        // Send chunk
-        if (ComTransmit(data, chunk_size, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        uint16_t chunk_size = size > 256 ? 256 : size;
+        if (ComTransmitPacket(MSG_ID_DATA_HTT, data, chunk_size) != BOOT_OK)
             return BOOT_ERROR;
 
-        // If 256 byte chunk was written or this is the last chunk, append CRC
-        if (chunk_size == 256 || size == chunk_size) {
-            uint32_t crc = crc32(data, chunk_size, INITIAL_CRC);
-            if (ComTransmit((uint8_t *)&crc, 4, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
-                return BOOT_ERROR;
-
-            // Wait for ACK
-            if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
-                return BOOT_ERROR;
-        }
+        // Wait for ACK
+        if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+            return BOOT_ERROR;
 
         data += chunk_size;
         size -= chunk_size;
@@ -172,7 +170,7 @@ Boot_StatusTypeDef ResetTarget(void) {
 */
 Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms) {
     Boot_MsgIdTypeDef msg_id = MSG_ID_NACK;
-    uint8_t length = 0xFF;
+    uint16_t length = 0xFF;
 
     // Wait for ack
     if (ComReceivePacket(&msg_id, NULL, &length, timeout_ms) != BOOT_OK)

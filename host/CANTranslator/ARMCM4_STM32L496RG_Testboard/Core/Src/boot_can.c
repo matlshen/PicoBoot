@@ -20,17 +20,24 @@ Boot_StatusTypeDef CANInit(void) {
     if (HAL_CAN_Init(&hcan1) != HAL_OK)
         return BOOT_ERROR;
 
-    // Only accept messages with ID in 0x700-0x7FF range
+    // TODO: Make this filter finer
+    // Only accept messages with ID in 0x740-77F range
     CAN_FilterTypeDef sFilterConfig = {
         .FilterBank = 0,
         .FilterMode = CAN_FILTERMODE_IDMASK,
         .FilterScale = CAN_FILTERSCALE_32BIT,
-        // The ID and mask need to be shifted left by 5 bits for standard IDs
-        .FilterIdHigh = (0x700 << 5) & 0xFFFF, // Shift left by 5, keep only high 16 bits
-        .FilterMaskIdHigh = (0x7FF << 5) & 0xFFFF, // A mask of 0x7FF will not work as intended for a range
+        // Adjust the ID to start at 0x750, still shifting left by 5 for standard ID positioning
+        .FilterIdHigh = (0x750 << 5) & 0xFFFF, // ID 0x750 shifted left by 5, high 16 bits
+        // Adjust the mask to only allow IDs within 0x750 to 0x760 range
+        // Since this range is within a 16-value span, the mask should ignore the last 4 bits
+        // Thus, we need to mask out all but the last 4 bits of the relevant section after shifting
+        .FilterMaskIdHigh = (~(0x3F << 5)) & 0xFFFF, // Inverting mask for last 4 bits, shifted and applied to high 16 bits
         .FilterFIFOAssignment = CAN_RX_FIFO0,
         .FilterActivation = ENABLE
-    };  
+    };
+
+HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
     HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
 
     // Start the CAN peripheral
@@ -64,15 +71,20 @@ Boot_StatusTypeDef CANTransmit(uint16_t id, const uint8_t *data, uint8_t length,
 }
 
 Boot_StatusTypeDef CANReceive(uint16_t *id, uint8_t *data, uint8_t *length, uint32_t timeout_ms) {
+    uint32_t start_time = HAL_GetTick();
+    
     CAN_RxHeaderTypeDef RxHeader;
 
     // Spinlock until a message is received
-    while (!HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0));
+    while (!HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
+        if (HAL_GetTick() - start_time > timeout_ms)
+            return BOOT_TIMEOUT;
 
     HAL_StatusTypeDef status = HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, data);
 
     if (status == HAL_OK) {
-        *id = RxHeader.StdId;
+        if (id != NULL)
+            *id = RxHeader.StdId;
         *length = RxHeader.DLC;
         return BOOT_OK;
     } else {

@@ -12,12 +12,11 @@ extern "C" {
 
 Boot_StatusTypeDef ComInit(void);
 Boot_StatusTypeDef ComDeInit(void);
-Boot_StatusTypeDef ComTransmit(const uint8_t *data, uint32_t length, uint32_t timeout_ms);
-Boot_StatusTypeDef ComReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms);
-Boot_StatusTypeDef ComTransmitPacket(Boot_MsgIdTypeDef msg_id, const uint8_t *data, uint8_t length);
-Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, uint8_t *length, uint32_t timeout_ms);
+Boot_StatusTypeDef ComTransmitPacket(Boot_MsgIdTypeDef msg_id, const uint8_t *data, uint16_t length);
+Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, uint16_t *length, uint32_t timeout_ms);
 Boot_StatusTypeDef ComAck();
 Boot_StatusTypeDef ComNack();
+Boot_StatusTypeDef ComWaitForAck(uint32_t timeout_ms);
 uint32_t ComGetTimeoutMs();
 
 
