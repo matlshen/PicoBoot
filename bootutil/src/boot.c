@@ -348,11 +348,13 @@ void ReadMemory(Boot_CmdPacketTypeDef *cmd_packet) {
             return;
         }
 
-        // Wait for ACK
-        if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK) {
-            ComNack();
-            return;
-        }
+        // If more data needs to be send, wait for ACK
+				if (bytes_remaining > 0) {
+        	if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK) {
+          	  ComNack();
+            	return;
+        	}
+				}
     }
 }
 

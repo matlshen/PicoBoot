@@ -46,6 +46,49 @@ Boot_StatusTypeDef CANTransmitPacket(Boot_MsgIdTypeDef msg_id, const uint8_t *da
     return BOOT_OK;
 }
 
+Boot_StatusTypeDef CANReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, uint16_t *length, uint32_t timeout_ms) {
+    // Receive the message ID
+    Boot_StatusTypeDef status = CANReceive(msg_id, data, length, BYTE_TIMEOUT_MS);
+    if (status != BOOT_OK)
+        return status;
+
+    bool is_data_packet = (*msg_id == MSG_ID_DATA_TTH || *msg_id == MSG_ID_DATA_HTT);
+    // If not a data packet, receive a single CAN frame
+    if (!is_data_packet)
+        return CANReceive(msg_id, data, length, BYTE_TIMEOUT_MS);
+    // If it is a data packet, first receive the length, then receive 8-byte CAN frames
+    else {
+        // Receive the length
+        uint8_t rx_length;
+        status = CANReceive(msg_id, &rx_length, length, BYTE_TIMEOUT_MS);
+        if (status != BOOT_OK)
+            return status;
+        *length = rx_length;
+
+        // Receive the data in 8-byte frames
+        uint16_t bytes_remaining = *length;
+        uint8_t *rx_data = data;
+        while (bytes_remaining > 0) {
+            uint8_t rx_length = bytes_remaining > 8 ? 8 : bytes_remaining;
+            status = CANReceive(msg_id, rx_data, &rx_length, BYTE_TIMEOUT_MS);
+            if (status != BOOT_OK)
+                return status;
+            rx_data += rx_length;
+            bytes_remaining -= rx_length;
+        }
+
+        // Receive and check the CRC
+        uint32_t rx_crc;
+        status = CANReceive(msg_id, (uint8_t*)&rx_crc, length, BYTE_TIMEOUT_MS);
+        if (status != BOOT_OK)
+            return status;
+        if (crc32(data, *length, INITIAL_CRC) != rx_crc)
+            return BOOT_ERROR;
+    }
+
+    return BOOT_OK;
+}
+
 void UserSetup() {
     ComInit();
 
@@ -67,9 +110,14 @@ void UserSetup() {
 
     while (1) {
         // Receive packet from host over UART
-        if (ComReceivePacket(&rx_id, rx_data, &rx_length, 10000) == BOOT_OK) {
-            // Transmit packet to target over CAN
-            CANTransmitPacket(rx_id, rx_data, rx_length);
+        if (ComReceivePacket(&rx_id, rx_data, &rx_length, 5000) == BOOT_OK) {
+            // If this was a data packet, keep receiving until the entire packet is received
+
+            // Receive packet from target over CAN
+            if (CANReceivePacket(&rx_id, rx_data, &rx_length, 5000) == BOOT_OK) {
+                // Transmit packet to host over UART
+                ComTransmitPacket(rx_id, rx_data, rx_length);
+            }
         }
     }
 }

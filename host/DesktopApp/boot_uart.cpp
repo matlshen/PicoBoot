@@ -94,9 +94,6 @@ Boot_StatusTypeDef UARTTransmit(const uint8_t *data, uint32_t length, uint32_t t
 Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_ms) {
     QElapsedTimer timer;
     int bytesRead = 0;
-
-    qDebug() << "Address: " << data;
-
     qDebug() << "Call with parameter: " << length << "timeout_ms: " << timeout_ms;
 
     // First, try to fulfill the request from the overflow buffer
@@ -129,7 +126,13 @@ Boot_StatusTypeDef UARTReceive(uint8_t *data, uint32_t length, uint32_t timeout_
         }
     }
 
+    if (bytesRead < length) {
+        qDebug() << "UARTReceive timeout";
+        // Clear overflow buffer if request was not fulfilled
+        overflowBuffer.clear();
+        return BOOT_TIMEOUT;
+    }
+
     qDebug() << "Received: " << bytesRead << "bytes " << *data;
-    qDebug() << "Address: " << data;
     return bytesRead == length ? BOOT_OK : BOOT_TIMEOUT;
 }
