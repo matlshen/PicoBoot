@@ -29,7 +29,6 @@ typedef enum {
 } Boot_StateTypeDef;
 static Boot_StateTypeDef boot_state = INIT;
 static bool in_bootloader_mode = false;
-static Boot_StatusTypeDef status;
 
 void BootStateMachine(void) {
     switch(boot_state) {
@@ -59,7 +58,6 @@ static void Init(void) {
     // Initialize communication interface
     ComInit();
 
-    // TODO: Initialize persistent configuration
     // Caclulate configuration address as closest page boundary below BL_APP_START_ADDRESS
     uint32_t config_addr = FlashUtil_RoundDownToPage(BL_APP_START_ADDRESS - sizeof(Boot_ConfigTypeDef));
 
@@ -99,6 +97,7 @@ static void WaitForConnection(void) {
         return;
     }
 
+    // If other data received, silently ignore
     if (cmd_packet.msg_id != MSG_ID_CONN_REQ)
         return;
 
@@ -127,7 +126,6 @@ static void WaitForCommand(void) {
         switch (cmd_packet.msg_id) {
             case MSG_ID_CONN_REQ:
                 CheckConnection(&cmd_packet);
-                ComAck();
                 break;
             case MSG_ID_CHANGE_SPEED:
                 // TODO: Implement this
@@ -184,7 +182,7 @@ void CheckConnection(Boot_CmdPacketTypeDef *cmd_packet) {
     }
 
     // If new node ID still matches, send ACK
-    if (cmd_packet->length == 2 && ToU16(&cmd_packet->data[0]) == p_cfg->node_id) {
+    else if (cmd_packet->length == 2 && ToU16(&cmd_packet->data[0]) == p_cfg->node_id) {
         ComAck();
         return;
     }
@@ -324,12 +322,10 @@ void ReadMemory(Boot_CmdPacketTypeDef *cmd_packet) {
     uint32_t end_address = ToU32(&cmd_packet->data[0]) + bytes_remaining;
 
     // If read range is not valid, send nack and return
-    // Otherwise, send ack to signal start of read data
+    // Otherwise, start sending read data
     if (!FlashReadRangeValid(start_address, bytes_remaining)) {
         ComNack();
         return;
-    } else {
-        ComAck();
     }
 
     // Read data from flash into buffer in 256 byte chunks
@@ -347,7 +343,7 @@ void ReadMemory(Boot_CmdPacketTypeDef *cmd_packet) {
         bytes_remaining -= current_read_size;
 
         // Transmit the current chunk
-        if (ComTransmitPacket(MSG_ID_MEM_READ_RESP, data_packet.data, current_read_size) != BOOT_OK) {
+        if (ComTransmitPacket(MSG_ID_DATA_TTH, data_packet.data, current_read_size) != BOOT_OK) {
             ComNack();
             return;
         }

@@ -6,6 +6,8 @@
 #include <QSerialPort>
 #include <QBrush>
 
+extern "C" void UART_RxCallback(uint8_t *buf, uint32_t len);
+
 class IoThread : public QObject
 {
     Q_OBJECT
@@ -27,7 +29,6 @@ signals:
     void UpdateProgress(int progress);
 
 public:
-    static QSerialPort* _serial;
     QByteArray _data;
     int _data_size;
     QByteArray _data_hash;

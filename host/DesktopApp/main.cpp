@@ -33,5 +33,27 @@ int main(int argc, char *argv[])
     // Start thread
     io_thread.start();
 
+
+    // // Open port
+    // _serial.setPortName("COM15");
+    // _serial.setBaudRate(QSerialPort::Baud115200);
+    // _serial.setDataBits(QSerialPort::Data8);
+    // _serial.setParity(QSerialPort::NoParity);
+    // _serial.setStopBits(QSerialPort::OneStop);
+    // _serial.setFlowControl(QSerialPort::NoFlowControl);
+    // if (_serial.open(QIODevice::ReadWrite)) {
+    //     qDebug("Opened port COM13");
+    // } else {
+    //     qDebug("Failed to open port COM13");
+    // }
+
+    // uint8_t rx_data[100];
+    // while (1) {
+    //     if (UARTReceive(rx_data, 5, 500) == BOOT_OK)
+    //         UARTTransmit(rx_data, 5, 1000);
+
+    //     QThread::msleep(1000);
+    // }
+
     return a.exec();
 }

@@ -46,7 +46,7 @@ typedef struct {
 
 typedef struct {
     Boot_MsgIdTypeDef msg_id;
-    uint8_t data[256];
+    uint8_t data[256] __attribute__((aligned(8))); /* Align to 8 bytes for flash write */
     uint16_t length;
 } Boot_DataPacketTypeDef;
 

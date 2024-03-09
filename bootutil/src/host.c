@@ -4,21 +4,26 @@
 Boot_ConfigTypeDef target_config;
 
 Boot_StatusTypeDef ConnectToTarget(uint16_t node_id) {
-    // If node_id is 0xFFFF, do not include node_id in connection request
-    if (node_id == 0xFFFF) {
-        // Send empty connection request
-        ComTransmitPacket(MSG_ID_CONN_REQ, NULL, 0);
-    } else {
-        // Send connection request with node_id
-        uint8_t tx_data[2] = {(uint8_t)(node_id & 0xFF), (uint8_t)(node_id >> 8)};
-        ComTransmitPacket(MSG_ID_CONN_REQ, tx_data, 2);
+    Boot_CmdPacketTypeDef connect_packet = {
+        .msg_id = MSG_ID_CONN_REQ,
+        // If node_id is 0xFFFF, do not include node_id in connection request
+        .length = node_id == 0xFFFF ? 0 : 2,
+        .data = {node_id & 0xFF, node_id >> 8}
+    };
+
+    // Attempt to connect for 5 seconds
+    int num_attempts = 5000 / BL_TIMEOUT_MS;
+    for (int i = 0; i < num_attempts; i++) {
+        // Send connection request
+        if (ComTransmitPacket(connect_packet.msg_id, connect_packet.data, connect_packet.length) != BOOT_OK)
+            return BOOT_ERROR;
+
+        // Wait for ACK
+        if (ComWaitForAck(BL_TIMEOUT_MS) == BOOT_OK)
+            return BOOT_OK;
     }
 
-    // Wait for ACK
-    if (WaitForAck(BL_TIMEOUT_MS) != BOOT_OK)
-        return BOOT_ERROR;
-
-    return BOOT_OK;
+    return BOOT_TIMEOUT;
 }
 
 Boot_StatusTypeDef GetTargetConfig() {
@@ -26,7 +31,7 @@ Boot_StatusTypeDef GetTargetConfig() {
     ComTransmitPacket(MSG_ID_GET_CONFIG, NULL, 0);
 
     // Receive config
-    Boot_DataPacketTypeDef data_packet;
+    Boot_DataPacketTypeDef data_packet = {0};
     if (ComReceivePacket(&data_packet.msg_id, data_packet.data, &data_packet.length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
@@ -49,7 +54,7 @@ Boot_StatusTypeDef SetTargetConfig() {
     ComTransmitPacket(MSG_ID_SET_CONFIG, NULL, 0);
 
     // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Send config
@@ -57,7 +62,7 @@ Boot_StatusTypeDef SetTargetConfig() {
         return BOOT_ERROR;
 
     // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     return BOOT_OK;
@@ -70,7 +75,8 @@ Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size) {
     ComTransmitPacket(MSG_ID_MEM_ERASE, tx_data, 6);
 
     // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    // Erase takes a while, allow 50ms per page
+    if (ComWaitForAck((size / BL_FLASH_PAGE_SIZE) * 50) != BOOT_OK)
         return BOOT_ERROR;
 
     return BOOT_OK;
@@ -81,10 +87,6 @@ Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *da
     uint8_t tx_data[6];
     ToFlashPacket(address, size, tx_data);
     ComTransmitPacket(MSG_ID_MEM_READ, tx_data, 6);
-
-    // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
-        return BOOT_ERROR;
 
     // Receive data in 256 byte chunks
     int isize = size;
@@ -119,7 +121,7 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
     ComTransmitPacket(MSG_ID_MEM_WRITE, tx_data, 6);
 
     // Wait for ACK
-    if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Send write data in 256 byte chunks
@@ -129,7 +131,7 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
             return BOOT_ERROR;
 
         // Wait for ACK
-        if (WaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
             return BOOT_ERROR;
 
         data += chunk_size;
@@ -144,7 +146,7 @@ Boot_StatusTypeDef VerifyTarget(uint8_t slot) {
     ComTransmitPacket(MSG_ID_VERIFY, &slot, 1);
 
     // Wait for ACK, allow 100ms for verify to complete
-    return WaitForAck(BL_COMMAND_TIMEOUT_MS + 100);
+    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS + 100);
 }
 
 Boot_StatusTypeDef GoTarget() {
@@ -152,7 +154,7 @@ Boot_StatusTypeDef GoTarget() {
     ComTransmitPacket(MSG_ID_GO, NULL, 0);
 
     // Wait for ACK
-    return WaitForAck(BL_COMMAND_TIMEOUT_MS);
+    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS);
 }
 
 Boot_StatusTypeDef ResetTarget(void) {
@@ -160,25 +162,5 @@ Boot_StatusTypeDef ResetTarget(void) {
     ComTransmitPacket(MSG_ID_RESET, NULL, 0);
 
     // Wait for ACK
-    return WaitForAck(BL_COMMAND_TIMEOUT_MS);
-}
-
-/**
- * @brief  Wait for an ACK response for the specified timeout period
- * @param  timeout_ms: Maximum time to wait for an ACK response
- * @retval BOOT_OK if ACK received, BOOT_ERROR otherwise
-*/
-Boot_StatusTypeDef WaitForAck(uint32_t timeout_ms) {
-    Boot_MsgIdTypeDef msg_id = MSG_ID_NACK;
-    uint16_t length = 0xFF;
-
-    // Wait for ack
-    if (ComReceivePacket(&msg_id, NULL, &length, timeout_ms) != BOOT_OK)
-        return BOOT_ERROR;
-
-    // Check if received message is an ACK
-    if (msg_id != MSG_ID_ACK || length != 0)
-        return BOOT_ERROR;
-
-    return BOOT_OK;
+    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS);
 }

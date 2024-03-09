@@ -3,10 +3,10 @@
 #include <QFile>
 #include <QCryptographicHash>
 
-QSerialPort* IoThread::_serial = nullptr;
+extern QSerialPort* _serial;
 
 IoThread::IoThread(QObject *parent) : QObject(parent) {
-    if (_serial == nullptr) _serial = new QSerialPort(this);
+
 }
 
 void IoThread::work() {
@@ -18,6 +18,9 @@ void IoThread::work() {
 
 void IoThread::ConnectSlot(QString portName, int nodeId) {
     qDebug("Opening port %s", portName.toStdString().c_str());
+
+    if (_serial == nullptr)
+        _serial = new QSerialPort();
 
     // Close serial port if it is already open
     if (_serial->isOpen()) {
@@ -31,9 +34,6 @@ void IoThread::ConnectSlot(QString portName, int nodeId) {
     _serial->setParity(QSerialPort::OddParity);
     _serial->setStopBits(QSerialPort::OneStop);
     _serial->setFlowControl(QSerialPort::NoFlowControl);
-
-    // Set minimum read buffer size
-    IoThread::_serial->setReadBufferSize(1);
 
     // Open serial port
     if (_serial->open(QIODevice::ReadWrite)) {
@@ -65,12 +65,6 @@ void IoThread::GetConfigSlot() {
     Boot_StatusTypeDef status = GetTargetConfig();
 
     if (status == BOOT_OK) {
-        // Check CRC of received configuration
-        uint32_t calculated_crc = crc32((uint8_t*)&target_config+4, sizeof(target_config)-4, INITIAL_CRC);
-        if (calculated_crc != target_config.crc32) {
-            emit SendLog("CRC error when receiving configuration", Qt::red);
-            return;
-        }
         emit SendLog("Retrieved target configuration", Qt::blue);
         emit SendLog("bootloader version: " + QString::number(target_config.version.major) + "." + QString::number(target_config.version.minor));
         emit SendLog("application load address: 0x" + QString::number(target_config.slot_list[0].load_address, 16).toUpper());

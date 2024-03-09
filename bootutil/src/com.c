@@ -132,7 +132,6 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
         if (status != BOOT_OK)
             return BOOT_FORMAT_ERROR;
     }
-    return BOOT_OK;
 
     // If this is a data packet, receive and verify the CRC
     if (isDataPacket) {
@@ -147,6 +146,8 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
         if (rx_crc != calc_crc)
             return BOOT_FORMAT_ERROR;
     }
+
+    return BOOT_OK;
     
     #elif defined(USE_CAN)
     // First receive a single CAN frame
@@ -211,8 +212,7 @@ inline Boot_StatusTypeDef ComNack() {
  * @retval BOOT_OK if ACK received, BOOT_ERROR otherwise
 */
 Boot_StatusTypeDef ComWaitForAck(uint32_t timeout_ms) {
-    Boot_CmdPacketTypeDef packet;
-    uint8_t length = 0xFF;
+    Boot_CmdPacketTypeDef packet = {0};
 
     // Wait for ack
     if (ComReceivePacket(&packet.msg_id, NULL, &packet.length, timeout_ms) != BOOT_OK)
