@@ -8,8 +8,8 @@ extern "C" {
 #endif
 
 void SystemReset();
+void MoveVectorTable(uint32_t app_addr);
 void JumpToApp(uint32_t app_addr);
-
 
 #ifdef __cplusplus
 }

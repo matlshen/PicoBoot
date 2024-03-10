@@ -1,4 +1,5 @@
 #include "flash_util.h"
+#include "boot.h"
 #include <memory.h>
 
 /**
@@ -66,7 +67,16 @@ void FromFlashPacket(uint32_t *address, uint16_t *size, const uint8_t *data) {
  * @return true if range is valid, false otherwise.
 */
 bool FlashUtil_IsRangeValid(uint32_t address, uint32_t size) {
-    return address >= BL_APP_START_ADDRESS && address + size - 1 <= BL_FLASH_END_ADDRESS;
+    // Check whether application is contained in valid slot
+    #ifdef TARGET
+    for (uint32_t i = 0; i < BL_NUM_SLOTS; i++) {
+        if (address >= p_cfg->slot_list[i].load_address &&
+            address + size <= p_cfg->slot_list[i].load_address + p_cfg->slot_list[i].slot_size) {
+            return true;
+        }
+    }
+    #endif
+    return false;
 }
 
 /**
@@ -112,6 +122,15 @@ uint32_t FlashUtil_GetPageNum(uint32_t address) {
 */
 uint32_t FlashUtil_GetNumPages(uint32_t size) {
     return (size + BL_FLASH_PAGE_SIZE - 1) / BL_FLASH_PAGE_SIZE;
+}
+
+/**
+ * @brief Get bank number for specified address.
+ * @param address Address to get bank number for.
+ * @return Bank number.
+*/
+uint32_t FlashUtil_GetBankNum(uint32_t address) {
+    return FlashUtil_GetPageNum(address) / BL_FLASH_BANK_SIZE + 1;
 }
 
 /**

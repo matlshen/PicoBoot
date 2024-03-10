@@ -27,7 +27,7 @@ signals:
     void EraseSignal(uint32_t address, uint16_t size);
     void ReadSignal(uint32_t address, uint16_t size);
     void ReadFileSignal(QString filename);
-    void DownloadSignal();
+    void DownloadSignal(uint8_t slot);
     void VerifySignal(uint8_t slot);
     void GoSignal();
     void ResetSignal();

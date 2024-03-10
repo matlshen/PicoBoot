@@ -1,7 +1,7 @@
 {
     "env": {
         "gccExePath": "C:\\msys64\\mingw64\\bin\\arm-none-eabi-gcc.exe",
-        "project_name": "host/CANTranslator/ARMCM4_STM32L496RG_Testboard",
+        "project_name": "boot/ARMCM4_STM32L476RG_Nucleo",
         "MCU_FAMILY": "STM32L4xx",
         "MCU_MODEL": "STM32L476xx",
         "gccArgs": [

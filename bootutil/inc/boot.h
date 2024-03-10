@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 
+extern Boot_ConfigTypeDef* p_cfg;
+
 void BootStateMachine(void);
 
 bool VerifySlot(uint8_t slot);

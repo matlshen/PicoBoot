@@ -42,23 +42,26 @@ void IoThread::ConnectSlot(QString portName, int nodeId) {
         emit SendLog("Failed to open port " + portName, Qt::red);
     }
 
-    // Connect to target
+    // Attempt to connect for 5 seconds
     Boot_StatusTypeDef status;
-    if (nodeId == -1)
-        status = ConnectToTarget(0xFFFF);
-    else
-        status = ConnectToTarget(static_cast<uint16_t>(nodeId));
+    int num_attempts = 5000 / BL_TIMEOUT_MS;
+    for (int i = 0; i < num_attempts; i++) {
+        emit SendLog("Attempting to connect to target", Qt::black);
+        status = ConnectToTarget(nodeId == -1 ? 0xFFFF : nodeId);
+        if (status == BOOT_OK)
+            break;
+    }
 
     // Check connection status
-    if (status == BOOT_OK)
+    if (status == BOOT_OK) {
         emit SendLog("Connected to target", Qt::blue);
+        // Get target configuration
+        GetConfigSlot();
+    }
     else if (status == BOOT_TIMEOUT)
         emit SendLog("Target timed out when attempting to connect", Qt::red);
     else
         emit SendLog("Error connecting to target", Qt::red);
-
-    // Get target configuration
-    GetConfigSlot();
 }
 
 void IoThread::GetConfigSlot() {
@@ -67,8 +70,10 @@ void IoThread::GetConfigSlot() {
     if (status == BOOT_OK) {
         emit SendLog("Retrieved target configuration", Qt::blue);
         emit SendLog("bootloader version: " + QString::number(target_config.version.major) + "." + QString::number(target_config.version.minor));
-        emit SendLog("application load address: 0x" + QString::number(target_config.slot_list[0].load_address, 16).toUpper());
-        emit SendLog("application slot size: 0x" + QString::number(target_config.slot_list[0].slot_size, 16).toUpper());
+        for (int i = 0; i < BL_NUM_SLOTS; i++) {
+            emit SendLog("slot " + QString::number(i) + " address: 0x" + QString::number(target_config.slot_list[i].load_address, 16).toUpper());
+            emit SendLog("slot " + QString::number(i) + " size: 0x" + QString::number(target_config.slot_list[i].slot_size, 16).toUpper());
+        }
     }
     else if (status == BOOT_TIMEOUT)
         emit SendLog("GetConfig operation timed out", Qt::red);
@@ -131,14 +136,14 @@ void IoThread::GetFileDataSlot(QString filename) {
     emit SendLog("Binary hash: " + _data_hash.toHex());
 }
 
-void IoThread::DownloadSlot() {
+void IoThread::DownloadSlot(uint8_t slot) {
     if (_data.isEmpty()) {
         emit SendLog("No data to download", Qt::red);
         return;
     }
 
     // Erase section of memory where application will be written
-    Boot_StatusTypeDef status = EraseTargetMemory(target_config.app_start_address, FlashUtil_RoundUpToPage(_data_size));
+    Boot_StatusTypeDef status = EraseTargetMemory(target_config.slot_list[slot].load_address, FlashUtil_RoundUpToPage(_data_size));
     if (status != BOOT_OK) {
         emit SendLog("Error erasing memory", Qt::red);
         return;
@@ -147,7 +152,7 @@ void IoThread::DownloadSlot() {
     // Write binary data to target in 256 byte chunks
     int num_chunks = _data_size / 256;
     for (int i = 0; i < num_chunks; i++) {
-        status = WriteTargetMemory(target_config.app_start_address + i*256, 256, (uint8_t*)_data.data() + i*256);
+        status = WriteTargetMemory(target_config.slot_list[slot].load_address + i*256, 256, (uint8_t*)_data.data() + i*256);
         if (status == BOOT_TIMEOUT) {
             emit SendLog("Download operation timed out", Qt::red);
             return;
@@ -161,7 +166,7 @@ void IoThread::DownloadSlot() {
         emit UpdateProgress((i+1) * 100 / num_chunks);
     }
     // Write remaining data
-    status = WriteTargetMemory(target_config.app_start_address + num_chunks*256, _data_size - num_chunks*256, (uint8_t*)_data.data() + num_chunks*256);
+    status = WriteTargetMemory(target_config.slot_list[slot].load_address + num_chunks*256, _data_size - num_chunks*256, (uint8_t*)_data.data() + num_chunks*256);
     if (status == BOOT_OK)
         emit SendLog("Download operation successful", Qt::blue);
     else if (status == BOOT_TIMEOUT)
@@ -176,7 +181,7 @@ void IoThread::DownloadSlot() {
     // TODO: Write new configuration to target
     // Add all the parameters
 
-    target_config.slot_list[target_config.active_slot].load_address = target_config.app_start_address;
+    target_config.slot_list[target_config.active_slot].load_address = target_config.slot_list[0].load_address;
     target_config.slot_list[target_config.active_slot].image_size = _data_size;
 
     // Write hash to target config

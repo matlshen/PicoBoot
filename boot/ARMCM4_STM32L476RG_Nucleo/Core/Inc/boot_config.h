@@ -6,26 +6,31 @@ extern "C" {
 #endif
 
 /* Platform information, node ID */
-#define TARGET 0U
-// #define HOST
+#define TARGET 0
+//#define HOST
+//#define EMULATOR
 
 /* Bootloader information */
 #define BL_VERSION_MAJOR    0U
 #define BL_VERSION_MINOR    1U
 
 /* Memory Information */
-#define BL_FLASH_START_ADDRESS      0x8000000U
+#define BL_FLASH_START_ADDRESS      0x08000000U
 #define BL_FLASH_PAGE_SIZE          0x800
-#define BL_FLASH_SIZE               0x00020000U
+#define BL_FLASH_BANK_SIZE          256U
+#define BL_FLASH_SIZE               0x00100000U
 #define BL_FLASH_END_ADDRESS        BL_FLASH_START_ADDRESS + BL_FLASH_SIZE
 
 #define BL_SRAM_START_ADDRESS       0x20000000U
 #define BL_SRAM_SIZE                0x00060000U
 
 /* Memory Locations */
-#define BL_APP_START_ADDRESS        0x8004000U
 #define BL_NUM_SLOTS                2U
-#define BL_CONFIG_ADDR              BL_APP_START_ADDRESS - BL_FLASH_PAGE_SIZE
+#define BL_SLOT_0_ADDRESS           0x08000000U
+#define BL_SLOT_0_SIZE              0x00040000U
+#define BL_SLOT_1_ADDRESS           0x08040000U
+#define BL_SLOT_1_SIZE              0x00040000U
+#define BL_LOAD_ADDRESS             0x080FA000U
 
 /* Timeouts */
 #define BL_TIMEOUT_MS              100000U

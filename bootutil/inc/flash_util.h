@@ -22,6 +22,7 @@ uint32_t FlashUtil_RoundUpToPage(uint32_t value);
 uint32_t FlashUtil_RoundDownToPage(uint32_t value);
 uint32_t FlashUtil_GetPageNum(uint32_t address);
 uint32_t FlashUtil_GetNumPages(uint32_t size);
+uint32_t FlashUtil_GetBankNum(uint32_t address);
 uint32_t FlashUtil_GetRangeAlignment(uint32_t address, uint32_t size);
 
 

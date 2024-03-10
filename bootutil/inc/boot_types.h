@@ -69,10 +69,20 @@ typedef struct {
 } Slot_ConfigTypeDef;
 
 /* Default slot config */
-#define DEFAULT_SLOT_CONFIG { \
+#define DEFAULT_SLOT_0_CONFIG { \
     .slot_populated = false, \
-    .load_address = BL_APP_START_ADDRESS, \
-    .slot_size = 0x8000, \
+    .load_address = BL_SLOT_0_ADDRESS, \
+    .slot_size = BL_SLOT_0_SIZE, \
+    .image_size = 0, \
+    .version = {0, 0}, \
+    .hash = {0}, \
+    .signature = 0, \
+};
+
+#define DEFAULT_SLOT_1_CONFIG { \
+    .slot_populated = false, \
+    .load_address = BL_SLOT_1_ADDRESS, \
+    .slot_size = BL_SLOT_1_SIZE, \
     .image_size = 0, \
     .version = {0, 0}, \
     .hash = {0}, \
@@ -89,7 +99,6 @@ typedef struct {
 typedef struct __attribute__((aligned(8))) {
     uint32_t crc32;                 /* CRC32 of boot_config */
     Version_TypeDef version;         /* Bootloader version */
-    uint32_t app_start_address;     /* Application section start address */
     uint32_t active_slot;           /* Active slot */
     Slot_ConfigTypeDef slot_list[BL_NUM_SLOTS]; /* Slot configurations */
     uint16_t node_id;                /* Node ID */

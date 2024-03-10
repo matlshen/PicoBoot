@@ -120,7 +120,7 @@ Boot_StatusTypeDef BootFlashErase(uint32_t address, uint32_t size) {
     // Erase flash
     FLASH_EraseInitTypeDef erase_init = {0};
     erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
-    erase_init.Banks = FLASH_BANK_1;
+    erase_init.Banks = FlashUtil_GetBankNum(address);
     erase_init.Page = FlashUtil_GetPageNum(address);
     erase_init.NbPages = FlashUtil_GetNumPages(size);
 
@@ -154,9 +154,9 @@ Boot_StatusTypeDef BootFlashRead(uint32_t address, void *data, uint32_t size) {
 
 /**
  * @brief Unrestricted write to flash memory.
- * @param address Start address to write to. Must be at least halfword-aligned.
+ * @param address Start address to write to. Must be at least doubleword-aligned.
  * @param data Buffer to write data from.
- * @param size Number of bytes to write. Must be at least halfword-aligned.
+ * @param size Number of bytes to write. Must be at least doubleword-aligned.
  * @return BOOT_OK if successful, otherwise error code.
 */
 Boot_StatusTypeDef BootFlashWrite(uint32_t address, const void *data, uint32_t size) {

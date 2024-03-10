@@ -11,17 +11,14 @@ Boot_StatusTypeDef ConnectToTarget(uint16_t node_id) {
         .data = {node_id & 0xFF, node_id >> 8}
     };
 
-    // Attempt to connect for 5 seconds
-    int num_attempts = 5000 / BL_TIMEOUT_MS;
-    for (int i = 0; i < num_attempts; i++) {
-        // Send connection request
-        if (ComTransmitPacket(connect_packet.msg_id, connect_packet.data, connect_packet.length) != BOOT_OK)
-            return BOOT_ERROR;
 
-        // Wait for ACK
-        if (ComWaitForAck(BL_TIMEOUT_MS) == BOOT_OK)
-            return BOOT_OK;
-    }
+    // Send connection request
+    if (ComTransmitPacket(connect_packet.msg_id, connect_packet.data, connect_packet.length) != BOOT_OK)
+        return BOOT_ERROR;
+
+    // Wait for ACK
+    if (ComWaitForAck(BL_TIMEOUT_MS) == BOOT_OK)
+        return BOOT_OK;
 
     return BOOT_TIMEOUT;
 }

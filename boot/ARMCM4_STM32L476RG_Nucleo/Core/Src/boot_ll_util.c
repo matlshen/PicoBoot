@@ -7,6 +7,11 @@ void SystemReset() {
     NVIC_SystemReset();
 }
 
+void MoveVectorTable(uint32_t app_addr) {
+    // Set the vector table to the application's vector table
+    SCB->VTOR = app_addr;
+}
+
 void JumpToApp(uint32_t app_addr) {
     // Disable interrupts
     __disable_irq();

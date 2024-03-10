@@ -149,7 +149,7 @@ void MainWindow::on_lineEdit_returnPressed()
         }
     }
     else if (tokens.at(0) == "download")
-        emit DownloadSignal();
+        emit DownloadSignal(ui->slotSpinBox->value());
     else if (tokens.at(0) == "verify") {
         // TODO: finish this
         if (tokens.size() != 2) {
@@ -171,7 +171,7 @@ void MainWindow::on_lineEdit_returnPressed()
 
 void MainWindow::on_programBtn_clicked()
 {
-    emit DownloadSignal();
+    emit DownloadSignal(ui->slotSpinBox->value());
 }
 
 

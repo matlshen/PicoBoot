@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         IoThread.h IoThread.cpp
         boot_config.h
         boot_uart.cpp
+        resources.qrc
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET DesktopApp APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
