@@ -153,12 +153,16 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
     // First receive a single CAN frame
     Boot_StatusTypeDef status = BOOT_OK;
     uint16_t rx_can_id;
-    status = CANReceive(&rx_can_id, data, (uint8_t*)length, timeout_ms);
+    uint8_t rx_length;
+    status = CANReceive(&rx_can_id, data, &rx_length, timeout_ms);
     if (status != BOOT_OK)
         return status;
 
     // Convert the CAN ID to a message ID
     *msg_id = CAN_MSG_ID(rx_can_id);
+
+    // Convert length to 16-bit
+    *length = rx_length;
 
     // If this is not a data packet, just return
     isDataPacket = (*msg_id == MSG_ID_DATA_TTH || *msg_id == MSG_ID_DATA_HTT);
@@ -169,12 +173,13 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
     // Receive the remaining data in 8-byte CAN frames
     *length = *data == 0 ? 256 : *data;
     uint16_t remaining_length = *length;
+    uint8_t *data_ptr = data;
     while (remaining_length > 0) {
         uint8_t rx_length;
-        status = CANReceive(&rx_can_id, data, &rx_length, BYTE_TIMEOUT_MS);
+        status = CANReceive(&rx_can_id, data_ptr, &rx_length, BYTE_TIMEOUT_MS);
         if (status != BOOT_OK)
             return status;
-        data += rx_length;
+        data_ptr += rx_length;
         remaining_length -= rx_length;
     }
 
@@ -184,9 +189,9 @@ Boot_StatusTypeDef ComReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, ui
     status = CANReceive(&rx_can_id, (uint8_t*)&rx_crc, &rx_crc_length, BYTE_TIMEOUT_MS);
     if (status != BOOT_OK)
         return status;
-    if (*length != 4)
+    if (rx_crc_length != 4)
         return BOOT_FORMAT_ERROR;
-    if (rx_crc != crc32(data, remaining_length, INITIAL_CRC))
+    if (rx_crc != crc32(data, *length, INITIAL_CRC))
         return BOOT_FORMAT_ERROR;
 
     return BOOT_OK;

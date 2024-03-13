@@ -32,6 +32,9 @@ include_directories(
     USB_DEVICE/Target
     STM32_USB_Device_Library/Core/Inc
     STM32_USB_Device_Library/Class/CDC/Inc
+    FreeRTOS/Source/include
+    FreeRTOS/Source/CMSIS_RTOS_V2
+    FreeRTOS/Source/portable/GCC/ARM_CM4F
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Inc
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Inc/Legacy
     ${COMMON_DIR}/CMSIS/Device/ST/${MCU_FAMILY}/Include
@@ -48,6 +51,10 @@ file(GLOB PROJECT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/USB_DEVICE/Target/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/STM32_USB_Device_Library/Core/Src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/STM32_USB_Device_Library/Class/CDC/Src/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS/Source/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS/Source/portable/MemMang/heap_4.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
     ${COMMON_DIR}/${MCU_FAMILY}_HAL_Driver/Src/*.c
 )
 list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*template.*")

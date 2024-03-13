@@ -1,7 +1,7 @@
 {
     "env": {
         "gccExePath": "C:\\msys64\\mingw64\\bin\\arm-none-eabi-gcc.exe",
-        "project_name": "boot/ARMCM4_STM32L476RG_Nucleo",
+        "project_name": "host/CANTranslator/ARMCM4_STM32L496RG_Testboard",
         "MCU_FAMILY": "STM32L4xx",
         "MCU_MODEL": "STM32L476xx",
         "gccArgs": [
@@ -37,6 +37,8 @@
                 "${env:project_name}/USB_DEVICE/Target",
                 "${env:project_name}/STM32_USB_Device_Library/Class/CDC/Inc",
                 "${env:project_name}/STM32_USB_Device_Library/Core/Inc",
+                "${env:project_name}/FreeRTOS/Source/include",
+                "${env:project_name}/FreeRTOS/Source/CMSIS_RTOS_V2",
                 "common/CMSIS/Device/ST/${env:MCU_FAMILY}/Include",
                 "common/CMSIS/Include",
                 "common/${env:MCU_FAMILY}_HAL_Driver/Inc",

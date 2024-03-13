@@ -64,6 +64,8 @@ typedef struct {
     uint32_t slot_size;         /* Application slot size */
     uint32_t image_size;        /* Application image size */
     Version_TypeDef version;    /* Application image version */
+    uint32_t msp;               /* MSP value for the application */
+    uint32_t reset_vector;      /* Reset vector for the application */
     uint32_t hash[8];           /* SHA256 of image */
     uint32_t signature;         /* ECDSA signature of hash output */
 } Slot_ConfigTypeDef;

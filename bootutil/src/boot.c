@@ -20,7 +20,7 @@ static void Go(void);
 static void HandleTimeout(void);
 
 /* Booloader configuration */
-Boot_ConfigTypeDef* p_cfg;
+Boot_ConfigTypeDef *p_cfg;
 
 /* State machine definitions */
 typedef enum {
@@ -272,6 +272,10 @@ void SetConfig(Boot_CmdPacketTypeDef *cmd_packet) {
 
     // If set operation was successful, send ack
     ComAck();
+
+    // Rerun initialization procedure to verify reset handler stayed the same
+    // TODO: Find a more elegant way to do this
+    Init();
 }
 
 void EraseMemory(Boot_CmdPacketTypeDef *cmd_packet) {
@@ -460,8 +464,11 @@ void Go(void) {
     ComAck();
     ComAck();
 
+    // Move vector table to application in slot 0
+    MoveVectorTable(p_cfg->slot_list[0].load_address);
+
     // Go to application in slot 0
-    JumpToApp(p_cfg->slot_list[0].load_address);
+    JumpToApp((uint32_t)&p_cfg->slot_list[0].msp);
 }
 
 bool VerifySlot(uint8_t slot) {
@@ -473,7 +480,8 @@ bool VerifySlot(uint8_t slot) {
     uint8_t computed_hash[SHA256_BLOCK_SIZE];
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, (uint8_t *)start_addr, size);
+    sha256_update(&ctx, (uint8_t *)&p_cfg->slot_list[slot].msp, 8); // MSP and reset vector
+    sha256_update(&ctx, (uint8_t *)start_addr + 8, size - 8); // Rest of application
     sha256_final(&ctx, computed_hash);
 
     // Compare computed hash with stored hash

@@ -26,9 +26,6 @@ void JumpToApp(uint32_t app_addr) {
     typedef void (*pFnResetHandler)(void);
     pFnResetHandler ResetHandler = (pFnResetHandler)(*(volatile uint32_t *)(app_addr + 4));
 
-    // Set the vector table to the application's vector table
-    SCB->VTOR = app_addr;
-
     // Enable interrupts
     __enable_irq();
 

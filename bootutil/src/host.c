@@ -1,6 +1,7 @@
 #include "host.h"
 #include "flash_util.h"
 
+#define BL_RESPONSE_TIMEOUT_MS 20
 Boot_ConfigTypeDef target_config;
 
 Boot_StatusTypeDef ConnectToTarget(uint16_t node_id) {
@@ -29,7 +30,7 @@ Boot_StatusTypeDef GetTargetConfig() {
 
     // Receive config
     Boot_DataPacketTypeDef data_packet = {0};
-    if (ComReceivePacket(&data_packet.msg_id, data_packet.data, &data_packet.length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComReceivePacket(&data_packet.msg_id, data_packet.data, &data_packet.length, BL_RESPONSE_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Check if received message is a config response
@@ -51,7 +52,7 @@ Boot_StatusTypeDef SetTargetConfig() {
     ComTransmitPacket(MSG_ID_SET_CONFIG, NULL, 0);
 
     // Wait for ACK
-    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_RESPONSE_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Send config
@@ -59,7 +60,7 @@ Boot_StatusTypeDef SetTargetConfig() {
         return BOOT_ERROR;
 
     // Wait for ACK
-    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_RESPONSE_TIMEOUT_MS + 50) != BOOT_OK)
         return BOOT_ERROR;
 
     return BOOT_OK;
@@ -90,7 +91,7 @@ Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *da
     while (isize > 0) {
         Boot_MsgIdTypeDef data_msg_id;
         uint16_t data_length;
-        if (ComReceivePacket(&data_msg_id, data, &data_length, BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        if (ComReceivePacket(&data_msg_id, data, &data_length, BL_RESPONSE_TIMEOUT_MS) != BOOT_OK)
             return BOOT_ERROR;
 
         if (data_msg_id != MSG_ID_DATA_TTH)
@@ -118,7 +119,7 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
     ComTransmitPacket(MSG_ID_MEM_WRITE, tx_data, 6);
 
     // Wait for ACK
-    if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+    if (ComWaitForAck(BL_RESPONSE_TIMEOUT_MS) != BOOT_OK)
         return BOOT_ERROR;
 
     // Send write data in 256 byte chunks
@@ -128,7 +129,7 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
             return BOOT_ERROR;
 
         // Wait for ACK
-        if (ComWaitForAck(BL_COMMAND_TIMEOUT_MS) != BOOT_OK)
+        if (ComWaitForAck(BL_RESPONSE_TIMEOUT_MS) != BOOT_OK)
             return BOOT_ERROR;
 
         data += chunk_size;
@@ -143,7 +144,7 @@ Boot_StatusTypeDef VerifyTarget(uint8_t slot) {
     ComTransmitPacket(MSG_ID_VERIFY, &slot, 1);
 
     // Wait for ACK, allow 100ms for verify to complete
-    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS + 100);
+    return ComWaitForAck(BL_RESPONSE_TIMEOUT_MS + 100);
 }
 
 Boot_StatusTypeDef GoTarget() {
@@ -151,7 +152,7 @@ Boot_StatusTypeDef GoTarget() {
     ComTransmitPacket(MSG_ID_GO, NULL, 0);
 
     // Wait for ACK
-    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS);
+    return ComWaitForAck(BL_RESPONSE_TIMEOUT_MS);
 }
 
 Boot_StatusTypeDef ResetTarget(void) {
@@ -159,5 +160,5 @@ Boot_StatusTypeDef ResetTarget(void) {
     ComTransmitPacket(MSG_ID_RESET, NULL, 0);
 
     // Wait for ACK
-    return ComWaitForAck(BL_COMMAND_TIMEOUT_MS);
+    return ComWaitForAck(BL_RESPONSE_TIMEOUT_MS);
 }

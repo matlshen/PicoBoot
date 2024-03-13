@@ -178,14 +178,16 @@ void IoThread::DownloadSlot(uint8_t slot) {
 
 
 
-    // TODO: Write new configuration to target
-    // Add all the parameters
+    // Write new configuration to target
+    // Image size
+    target_config.slot_list[slot].image_size = _data_size;
 
-    target_config.slot_list[target_config.active_slot].load_address = target_config.slot_list[0].load_address;
-    target_config.slot_list[target_config.active_slot].image_size = _data_size;
+    // MSP and reset vector
+    target_config.slot_list[slot].msp = ((uint32_t*)_data.data())[0];
+    target_config.slot_list[slot].reset_vector = ((uint32_t*)_data.data())[1];
 
     // Write hash to target config
-    memcpy(target_config.slot_list[target_config.active_slot].hash, _data_hash, 32);
+    memcpy(target_config.slot_list[slot].hash, _data_hash, 32);
 
     // Compute CRC32 of new configuration
     target_config.crc32 = crc32((uint8_t*)&target_config+4, sizeof(target_config)-4, INITIAL_CRC);
