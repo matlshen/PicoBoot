@@ -25,10 +25,13 @@ const osThreadAttr_t can2uart_thread_attr = {
     .name = "can2uart",
     .stack_mem = &can2uart_thread_stack,
     .stack_size = sizeof(can2uart_thread_stack),
-    .priority = osPriorityNormal,
+    .priority = osPriorityAboveNormal,
     .cb_mem = &can2uart_thread_tcb,
     .cb_size = sizeof(can2uart_thread_tcb)
 };
+
+/* CAN message queue */
+osMessageQueueId_t can_msg_queue_id;
 
 Boot_StatusTypeDef UARTTransmitPacket(Boot_MsgIdTypeDef msg_id, const uint8_t *data, uint16_t length) {
     bool is_data_packet = (msg_id == MSG_ID_DATA_TTH || msg_id == MSG_ID_DATA_HTT);
@@ -116,6 +119,17 @@ Boot_StatusTypeDef UARTReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, u
     return BOOT_OK;
 }
 
+void CANReceivePacket(Boot_MsgIdTypeDef *msg_id, uint8_t *data, uint16_t *length) {
+    bool isDataPacket = false;
+
+    Boot_StatusTypeDef status = BOOT_OK;
+
+    // Given timeout only applies to the message ID bytes
+    // All other bytes are expected to be received within BYTE_TIMEOUT_MS
+    // Timeout on other bytes leads to a format error, not timeout error
+
+}
+
 void UserSetup(void) {
     // Initialize the CAN interface (controlled by COM driver)
     ComInit();
@@ -128,6 +142,9 @@ void UserSetup(void) {
 
     // Create the CAN to UART thread
     can2uart_thread_id = osThreadNew(CAN2UARTThread, NULL, &can2uart_thread_attr);
+
+    // Initialize queue
+    can_msg_queue_id = osMessageQueueNew(32, sizeof(CAN_FrameTypeDef), NULL);
 
     // Start the scheduler
     osKernelStart();
