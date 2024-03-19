@@ -19,6 +19,7 @@ public slots:
     void GetConfigSlot();
     void EraseSlot(uint32_t address, uint16_t size);
     void ReadSlot(uint32_t address, uint16_t size);
+    void SwapSlot(uint8_t src_slot, uint8_t dst_slot);
     void GetFileDataSlot(QString fielname);
     void DownloadSlot(uint8_t slot);
     void VerifySlot(uint8_t slot);

@@ -5,6 +5,7 @@
 
 /* Function prototypes */
 static void Init(void);
+static void WriteNewConfig(Boot_ConfigTypeDef *new_config);
 static void WaitForConnection(void);
 static void WaitForCommand(void);
 static void CheckConnection(Boot_CmdPacketTypeDef *cmd_packet);
@@ -109,6 +110,12 @@ static void Init(void) {
     ComInit();
 }
 #endif
+
+static void WriteNewConfig(Boot_ConfigTypeDef *new_config) {
+    // Write new configuration to flash
+    BootFlashErase((uint32_t)p_cfg, FlashUtil_RoundUpToPage(sizeof(Boot_ConfigTypeDef)));
+    BootFlashWrite((uint32_t)p_cfg, (void*)new_config, sizeof(Boot_ConfigTypeDef));
+}
 
 // Wait for connection from target. Stay quiet if no connection
 static void WaitForConnection(void) {
@@ -409,9 +416,9 @@ static void Swap(Boot_CmdPacketTypeDef *cmd_packet) {
 
     // Swap the two slots
     for (uint32_t i = 0; i < pages_to_swap; i++) {
-        // Read page from source slot
+        // Read page from destination slot
         uint8_t page_buffer[BL_FLASH_PAGE_SIZE];
-        if (FlashRead(p_cfg->slot_list[slot_src].load_address + i * BL_FLASH_PAGE_SIZE, page_buffer, BL_FLASH_PAGE_SIZE) != BOOT_OK) {
+        if (FlashRead(p_cfg->slot_list[slot_dst].load_address + i * BL_FLASH_PAGE_SIZE, page_buffer, BL_FLASH_PAGE_SIZE) != BOOT_OK) {
             ComNack();
             return;
         }
@@ -422,12 +429,43 @@ static void Swap(Boot_CmdPacketTypeDef *cmd_packet) {
             return;
         }
 
-        // Write page to destination slot
-        if (FlashWrite(p_cfg->slot_list[slot_dst].load_address + i * BL_FLASH_PAGE_SIZE, page_buffer, BL_FLASH_PAGE_SIZE) != BOOT_OK) {
+        // Write from source slot to destination slot
+        if (FlashWrite(p_cfg->slot_list[slot_dst].load_address + i * BL_FLASH_PAGE_SIZE, 
+                       (const void*)(p_cfg->slot_list[slot_src].load_address + i * BL_FLASH_PAGE_SIZE),
+                       BL_FLASH_PAGE_SIZE) != BOOT_OK) {
+            ComNack();
+            return;
+        }
+
+        // Erase page in source slot
+        if (FlashErase(p_cfg->slot_list[slot_src].load_address + i * BL_FLASH_PAGE_SIZE, BL_FLASH_PAGE_SIZE) != BOOT_OK) {
+            ComNack();
+            return;
+        }
+
+        // Write page buffer to source slot
+        if (FlashWrite(p_cfg->slot_list[slot_src].load_address + i * BL_FLASH_PAGE_SIZE, page_buffer, BL_FLASH_PAGE_SIZE) != BOOT_OK) {
             ComNack();
             return;
         }
     }
+
+    // Swap slot configuration image
+    // Copy existing configuration to new configuration
+    Boot_ConfigTypeDef new_config;
+    memcpy(&new_config, p_cfg, sizeof(Boot_ConfigTypeDef));
+    // Swap slots
+    memcpy(&new_config.slot_list[slot_dst], &p_cfg->slot_list[slot_src], sizeof(Slot_ConfigTypeDef));
+    memcpy(&new_config.slot_list[slot_src], &p_cfg->slot_list[slot_dst], sizeof(Slot_ConfigTypeDef));
+    // Don't swap load_address and slot_size
+    new_config.slot_list[slot_src].load_address = p_cfg->slot_list[slot_src].load_address;
+    new_config.slot_list[slot_dst].load_address = p_cfg->slot_list[slot_dst].load_address;
+    new_config.slot_list[slot_src].slot_size = p_cfg->slot_list[slot_src].slot_size;
+    new_config.slot_list[slot_dst].slot_size = p_cfg->slot_list[slot_dst].slot_size;
+    // Update CRC32
+    new_config.crc32 = GetConfigCrc(&new_config);
+    // Write new configuration to flash
+    WriteNewConfig(&new_config);
 
     // Swap successful, send ack
     ComAck();
@@ -475,6 +513,11 @@ bool VerifySlot(uint8_t slot) {
     // Verify application in slot specified
     uint32_t start_addr = p_cfg->slot_list[slot].load_address;
     uint32_t size = p_cfg->slot_list[slot].image_size;
+
+		// If slot is not populated (image_size == 0), return
+		// This avoid problems with underflow in sha256_update() function
+		if (size < 8)
+				return false;
 
     // Compute sha256 hash of application
     uint8_t computed_hash[SHA256_BLOCK_SIZE];

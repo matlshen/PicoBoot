@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     QObject::connect(&w, &MainWindow::ReadSignal, &worker, &IoThread::ReadSlot);
     QObject::connect(&w, &MainWindow::ReadFileSignal, &worker, &IoThread::GetFileDataSlot);
     QObject::connect(&w, &MainWindow::DownloadSignal, &worker, &IoThread::DownloadSlot);
+    QObject::connect(&w, &MainWindow::SwapSignal, &worker, &IoThread::SwapSlot);
     QObject::connect(&w, &MainWindow::VerifySignal, &worker, &IoThread::VerifySlot);
     QObject::connect(&w, &MainWindow::GoSignal, &worker, &IoThread::GoSlot);
     QObject::connect(&w, &MainWindow::ResetSignal, &worker, &IoThread::ResetSlot);

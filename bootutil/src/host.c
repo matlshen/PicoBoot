@@ -139,6 +139,24 @@ Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *d
     return BOOT_OK;
 }
 
+Boot_StatusTypeDef SwapTarget(uint8_t src_slot, uint8_t dst_slot) {
+    // Send swap request
+    uint8_t tx_data[2] = {src_slot, dst_slot};
+    ComTransmitPacket(MSG_ID_SWAP, tx_data, 2);
+
+    // Get the maximum image size from the target config
+    uint32_t max_image_size = 0;
+    for (int i = 0; i < BL_NUM_SLOTS; i++) {
+        if (target_config.slot_list[i].image_size > max_image_size)
+            max_image_size = target_config.slot_list[i].image_size;
+    }
+
+    // Wait for ACK, allow extra 100ms per kB of image size
+    uint32_t timeout = BL_RESPONSE_TIMEOUT_MS + (max_image_size / 1024) * 100;
+
+    return ComWaitForAck(timeout);
+}
+
 Boot_StatusTypeDef VerifyTarget(uint8_t slot) {
     // Send verify request
     ComTransmitPacket(MSG_ID_VERIFY, &slot, 1);

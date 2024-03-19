@@ -15,6 +15,7 @@ Boot_StatusTypeDef SetTargetConfig();
 Boot_StatusTypeDef EraseTargetMemory(uint32_t address, uint16_t size);
 Boot_StatusTypeDef ReadTargetMemory(uint32_t address, uint16_t size, uint8_t *data);
 Boot_StatusTypeDef WriteTargetMemory(uint32_t address, uint16_t size, uint8_t *data);
+Boot_StatusTypeDef SwapTarget(uint8_t src_slot, uint8_t dst_slot);
 Boot_StatusTypeDef VerifyTarget(uint8_t slot);
 Boot_StatusTypeDef GoTarget();
 Boot_StatusTypeDef ResetTarget();

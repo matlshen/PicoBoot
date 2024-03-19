@@ -116,6 +116,17 @@ void IoThread::ReadSlot(uint32_t address, uint16_t size) {
     delete[] data;
 }
 
+void IoThread::SwapSlot(uint8_t src_slot, uint8_t dst_slot) {
+    Boot_StatusTypeDef status = SwapTarget(src_slot, dst_slot);
+
+    if (status == BOOT_OK)
+        emit SendLog("Swap operation successful", Qt::blue);
+    else if (status == BOOT_TIMEOUT)
+        emit SendLog("Swap operation timed out", Qt::red);
+    else
+        emit SendLog("Error swapping slots", Qt::red);
+}
+
 void IoThread::GetFileDataSlot(QString filename) {
     if (filename.isEmpty())
         return;

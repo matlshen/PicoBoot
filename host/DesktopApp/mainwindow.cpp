@@ -150,6 +150,16 @@ void MainWindow::on_lineEdit_returnPressed()
     }
     else if (tokens.at(0) == "download")
         emit DownloadSignal(ui->slotSpinBox->value());
+    else if (tokens.at(0) == "swap") {
+        if (tokens.size() != 3) {
+            UpdateLog("Usage: swap <src> <dst>");
+            return;
+        }
+
+        int src_slot = tokens.at(1).right(1)[0].digitValue();
+        int dst_slot = tokens.at(2).right(1)[0].digitValue();
+        emit SwapSignal(src_slot, dst_slot);
+    }
     else if (tokens.at(0) == "verify") {
         // TODO: finish this
         if (tokens.size() != 2) {
